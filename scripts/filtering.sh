@@ -16,7 +16,7 @@
 
 # Default variables
 RATE=0.5
-FOLDER=/mnt/data/Ines/DR5
+FOLDER=/home/monrillo/data
 INST=PN
 
 # Input variables

@@ -15,7 +15,7 @@ Various resources for both detector and renderer
 # Built-in imports
 
 import sys
-sys.path.append('/home/ines/anaconda3/lib/skimage')
+sys.path.append('/home/monrillo/anaconda3/lib/skimage')
 import os
 import time
 from functools import partial
@@ -29,7 +29,7 @@ from astropy import wcs
 from astropy.io import fits
 import numpy as np
 import scipy.ndimage as nd
-import skimage
+import skimage.transform
 
 # Internal imports
 

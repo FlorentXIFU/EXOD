@@ -17,10 +17,10 @@
 ################################################################################
 
 # Default variables
-DL=8 ; TW=100 ; GTR=1.0 ; BS=3 ; CPUS=12
+DL=8 ; TW=100 ; GTR=1.0 ; BS=3 ; CPUS=8
 # Default folders
-FOLDER=/mnt/data/Ines/data
-SCRIPTS=/mnt/data/Ines/EXOD
+FOLDER=/home/monrillo/data
+SCRIPTS=/home/monrillo/EXOD/scripts
 
 # Input variables
 while [[ $# -gt 0 ]]; do
