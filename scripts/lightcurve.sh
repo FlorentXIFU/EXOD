@@ -53,7 +53,7 @@ if [[ $1 == "-h" ]] || [[ $1 == "--help" ]] ; then
 	echo -e "\
 	Parameters to use :\n\
 	@path       : full path to the observation\n\
-  @scripts    : full path to the scripts folder\n\
+  	@scripts    : full path to the scripts folder\n\
 	@id         : id number of the detected source within the observation\n\
 	@DL         : Detection level used for the variable sources detection\n\
 	@TW         : Time window used for the variable sources detection\n\

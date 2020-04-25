@@ -17,6 +17,7 @@
 # Default variables
 RATE=0.5
 FOLDER=/home/monrillo/data
+SCRIPTS=/home/monrillo/EXOD/scripts
 INST=PN
 
 # Input variables
@@ -101,26 +102,26 @@ title "Cleaning events file"
 # File names
 if [ "$INST" == "PN" ]; then
   org_file=$(ls $path/*${OBS}PN*PIEVLI*)
-  clean_file=$path/$(var CLEAN_FILE)
-  gti_file=$path/$(var GTI_FILE)
-  img_file=$path/$(var IMG_FILE)
-  rate_file=$path/$(var RATE_FILE)
+  clean_file=$path/PN_clean.fits
+  gti_file=$path/PN_gti.fits
+  img_file=$path/PN_image.fits
+  rate_file=$path/PN_rate.fits
   l=P
 
 elif [ "$INST" == "M1" ]; then
   org_file=$(ls $path/*${OBS}M1*MIEVLI*)
   clean_file=$path/M1_clean.fits
-  gti_file=$path/$(var GTI_FILE)
+  gti_file=$path/M1_gti.fits
   img_file=$path/M1_image.fits
-  rate_file=$path/$(var RATE_FILE)
+  rate_file=$path/M1_rate.fits
   l=M
 
 elif [ "$INST" == "M2" ]; then
   org_file=$(ls $path/*${OBS}M2*MIEVLI*)
   clean_file=$path/M2_clean.fits
-  gti_file=$path/$(var GTI_FILE)
+  gti_file=$path/M2_gti.fits
   img_file=$path/M2_image.fits
-  rate_file=$path/$(var RATE_FILE)
+  rate_file=$path/M2_rate.fits
   l=M
 
 else
@@ -136,9 +137,14 @@ echo -e "\tRATE FILE  = ${rate_file}"
 
 # Creating GTI
 if [ "$INST" == "PN" ]; then 
-  title "Creating GTI"
+  title "Creating GTI for PN"
 
   evselect table=$org_file withrateset=Y rateset=$rate_file maketimecolumn=Y timebinsize=100 makeratecolumn=Y expression='#XMMEA_EP && (PI in [10000:12000]) && (PATTERN==0)' -V 0
+
+elif [ "$INST" == "M1" ] || [ "$INST" == "M2" ]; then 
+  title "Creating GTI for MOS"
+
+  evselect table=$org_file withrateset=Y rateset=$rate_file maketimecolumn=Y timebinsize=100 makeratecolumn=Y expression='#XMMEA_EM && (PI>10000) && (PATTERN==0)' -V 0
 
   if [[ $RATE != [0-9]* ]]; then
     echo "Opening PN_rate.fits" 
@@ -158,6 +164,17 @@ evselect table=$org_file withfilteredset=Y filteredset=$clean_file destruct=Y ke
 # Creating image file
 evselect table=$clean_file imagebinning=binSize imageset=$img_file withimageset=yes xcolumn=X ycolumn=Y ximagebinsize=80 yimagebinsize=80 -V 0
 
-echo > $path/PN_processing.log "Rate: $RATE"
+
+if [ "$INST" == "PN" ]; then 
+  echo > $path/PN_processing.log "Rate: $RATE"
+
+elif [ "$INST" == "M1" ]; then 
+  echo > $path/M1_processing.log "Rate: $RATE"
+
+elif [ "$INST" == "M2" ]; then 
+  echo > $path/M2_processing.log "Rate: $RATE"
+
+fi
+
 echo "The end" 
 date 

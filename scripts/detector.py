@@ -60,7 +60,7 @@ parser.add_argument("-bs", "--box-size", dest="bs", help="Size of the detection 
 parser.add_argument("-dl", "--detection-level", dest="dl", help="The number of times the median variability is required to trigger a detection.\nDefault: 10", default=10, nargs='?', type=float)
 parser.add_argument("-tw", "--time-window", dest="tw", help="The duration of the time windows.\n Default: 100", default=100.0, nargs='?', type=float)
 parser.add_argument("-gtr", "--good-time-ratio", dest="gtr", help="Ratio of acceptability for a time window. Shall be between 0.0 and 1.0.\nDefault: 1.0", default=1.0, nargs='?', type=float)
-parser.add_argument("-mta", "--max-threads-allowed", dest="mta", help="Maximal number of CPUs the program is allowed to use.\nDefault: 12", nargs='?', default=12, type=int)
+parser.add_argument("-mta", "--max-threads-allowed", dest="mta", help="Maximal number of CPUs the program is allowed to use.\nDefault: 8", nargs='?', default=8, type=int)
 
 # Arguments set by default
 parser.add_argument("-creator", dest="creator", help="User creating the variability files", nargs='?', default=os.environ['USER'], type=str)
