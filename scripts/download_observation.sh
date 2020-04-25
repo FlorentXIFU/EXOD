@@ -7,7 +7,7 @@ path=$folder/$obs
 if [ ! -d $path ]; then mkdir $path; fi
 
 cd $path
-
+echo ${mode[@]}
 ###
 # Observation
 ###
