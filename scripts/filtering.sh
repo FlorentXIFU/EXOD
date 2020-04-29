@@ -15,7 +15,7 @@
 ###
 
 # Default variables
-RATE=0.5
+RATE=0.5	# according to SAS documentation (PN Rate = 0.4 and MOS Rate = 0.35)
 FOLDER=/home/monrillo/data
 SCRIPTS=/home/monrillo/EXOD/scripts
 INST=PN
@@ -136,32 +136,44 @@ echo -e "\tIMAGE FILE = ${img_file}"
 echo -e "\tRATE FILE  = ${rate_file}"
 
 # Creating GTI
-if [ "$INST" == "PN" ]; then 
-  title "Creating GTI for PN"
+title "Creating GTI"
+
+if [ "$INST" == "PN" ]; then
 
   evselect table=$org_file withrateset=Y rateset=$rate_file maketimecolumn=Y timebinsize=100 makeratecolumn=Y expression='#XMMEA_EP && (PI in [10000:12000]) && (PATTERN==0)' -V 0
 
-elif [ "$INST" == "M1" ] || [ "$INST" == "M2" ]; then 
-  title "Creating GTI for MOS"
+elif [ "$INST" == "M1" ] || [ "$INST" == "M2" ]; then
 
   evselect table=$org_file withrateset=Y rateset=$rate_file maketimecolumn=Y timebinsize=100 makeratecolumn=Y expression='#XMMEA_EM && (PI>10000) && (PATTERN==0)' -V 0
 
-  if [[ $RATE != [0-9]* ]]; then
+fi
+
+if [[ $RATE != [0-9]* ]]; then
     echo "Opening PN_rate.fits" 
     fv $rate_file &
     read -p "Choose the GTI cut rate : " RATE
-  fi
-  echo "Creating Good Time Intervals with threshold RATE=$RATE"
-
-  tabgtigen table=$rate_file expression="RATE<=$RATE" gtiset=$gti_file -V 0
 fi
+echo "Creating Good Time Intervals with threshold RATE=$RATE"
+
+tabgtigen table=$rate_file expression="RATE<=$RATE" gtiset=$gti_file -V 0
 
 # Cleaning events file
-evselect table=$org_file withfilteredset=Y filteredset=$clean_file destruct=Y keepfilteroutput=T expression="#XMMEA_E$l && gti($gti_file,TIME) && (PATTERN<=4) && (PI in [500:12000])" -V 0
+
+if [ "$INST" == "PN" ]; then
+
+  evselect table=$org_file withfilteredset=Y filteredset=$clean_file destruct=Y keepfilteroutput=T expression="#XMMEA_EP && gti($gti_file,TIME) && (PATTERN<=4) && (PI in [500:12000])" -V 0
+
+elif [ "$INST" == "M1" ] || [ "$INST" == "M2" ]; then
+
+  evselect table=$org_file withfilteredset=Y filteredset=$clean_file destruct=Y keepfilteroutput=T expression="#XMMEA_EM && gti($gti_file,TIME) && (PATTERN<=12) && (PI in [200:10000])" -V 0
+# PI > 500 for avoiding thermal noise ?
+
+fi
 
 #ds9 $events_file -bin factor 64 -scale log -cmap bb -mode region &
 
 # Creating image file
+
 evselect table=$clean_file imagebinning=binSize imageset=$img_file withimageset=yes xcolumn=X ycolumn=Y ximagebinsize=80 yimagebinsize=80 -V 0
 
 
@@ -175,6 +187,8 @@ elif [ "$INST" == "M2" ]; then
   echo > $path/M2_processing.log "Rate: $RATE"
 
 fi
+
+echo "Rate = ..." >> $path/${INST}_processing.log
 
 echo "The end" 
 date 

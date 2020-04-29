@@ -78,8 +78,12 @@ observation=${path: -10}
 title1 "Lightcurve Obs. $observation Src. $id"
 
 # Selecting the files and paths
-sums=/mnt/xmmcat/3XMM_data/SumSas_files_4Webcat
-fbks=/mnt/data/Ines/data/fbktsr_dr5
+
+#sums=/mnt/xmmcat/3XMM_data/SumSas_files_4Webcat
+#fbks=/mnt/data/Ines/data/fbktsr_dr5
+
+sums=$path
+fbks=$path
 clean_file=$path/PN_clean.fits
 gti_file=$path/PN_gti.fits
 img_file=$path/PN_image.fits
@@ -113,8 +117,8 @@ if [ ! -f $path/ccf.cif ]; then cifbuild; fi
 title2 "Preliminaries"
 
 cd $path_out
-if [ ! -f $path/${DL}_${TW}_${GTR}_${BS}/sources.pdf ]; then 
-  python3 -W"ignore" $scripts/renderer.py $path/${DL}_${TW}_${GTR}_${BS} $clean_file -obs $observation -tw $TW -dl $DL -bs $BS; fi
+if [ ! -f $path/${DL}_${TW}_${BS}_${GTR}/sources.pdf ]; then 
+  python3 -W"ignore" $scripts/renderer.py $path/${DL}_${TW}_${BS}_${GTR} $clean_file -obs $observation -tw $TW -dl $DL -bs $BS; fi
 if [ ! -f $img_file ]; then
   evselect table=$clean_file imagebinning=binSize imageset=$img_file withimageset=yes xcolumn=X ycolumn=Y ximagebinsize=80 yimagebinsize=80 -V 0
 fi
@@ -123,25 +127,33 @@ fi
 # Reading data from the detected_variable_sources file
 ###
 
-data=$(cat $path/${DL}_${TW}_${GTR}_${BS}/detected_variable_sources.csv | grep "^${id};")
+# data=$(cat $path/${DL}_${TW}_${GTR}_${BS}/detected_variable_sources.csv | grep "^${id};")
+
+data=$(cat $path/${DL}_${TW}_${BS}_${GTR}/ds9_variable_sources.reg | grep 'text="'$id'"')
 
 ###
 # Defining source position
 ###
 
-IFS=';' read -r -a array <<< "$data"
-n=${array[0]}
-ccd=${array[1]}
-rawx=${array[2]}
-rawy=${array[3]}
-srcR=$((${array[4]} * 64))				# Pixel units
+#IFS=';' read -r -a array <<< "$data"
+#n=${array[0]}
+#ccd=${array[1]}
+#rawx=${array[2]}
+#rawy=${array[3]}
+#srcR=$((${array[4]} * 64))				# Pixel units
 
-echo "ccd=$ccd, rawx=$rawx, rawy=$rawy, r=$srcR"
+RA=$(echo $data | awk '{print $2}' | sed "s/.$//")
+DEC=$(echo $data | awk '{print $3}' | sed "s/.$//")
+R=$(echo $data | awk '{print $4}' | sed "s/.$//")
 
-srcXY=$(ecoordconv imageset=$img_file coordtype=raw x=$rawx y=$rawy ccdno=$ccd | tee /dev/tty|grep 'X: Y:'|sed 's/X: Y: //'|sed 's/ /,/g'|sed 's/,//')
+# echo "ccd=$ccd, rawx=$rawx, rawy=$rawy, r=$srcR"
+
+srcXY=$(ecoordconv imageset=$img_file coordtype=eqpos x=$RA y=$DEC r=$R | tee /dev/tty|grep 'X: Y:'|sed 's/X: Y: //'|sed 's/ /,/g'|sed 's/,//')
 
 # Correcting source and background position
-srcexp=$(eregionanalyse imageset=$img_file srcexp="(X,Y) in CIRCLE($srcXY,$srcR)" backval=0.1|tee /dev/tty|grep 'SASCIRCLE'|sed 's/SASCIRCLE: //g')
+
+# srcexp=$(eregionanalyse imageset=$img_file srcexp="(X,Y) in CIRCLE($srcXY,$srcR)" backval=0.1|tee /dev/tty|grep 'SASCIRCLE'|sed 's/SASCIRCLE: //g')
+srcexp=$(eregionanalyse imageset=$img_file srcexp="(X,Y) in CIRCLE($srcXY,$R)" backval=0.1|tee /dev/tty|grep 'SASCIRCLE'|sed 's/SASCIRCLE: //g')
 srcR=$(echo $srcexp | sed "s/(X,Y) in CIRCLE([0-9]*.[0-9]*,[0-9]*.[0-9]*,//" | sed "s/)//")
 # arcsec
 srcRas=$(bc <<< "scale=2; $srcR * 0.05")
@@ -149,13 +161,17 @@ srcRas=$(bc <<< "scale=2; $srcR * 0.05")
 ###
 # Source name and coordinates
 ###
-srccoord=$(ecoordconv imageset=$img_file coordtype=raw x=$rawx y=$rawy ccdno=$ccd | tee /dev/tty|grep ' RA: DEC: ' | sed 's/ RA: DEC: //g')
+
+# srccoord=$(ecoordconv imageset=$img_file coordtype=raw x=$rawx y=$rawy ccdno=$ccd | tee /dev/tty|grep ' RA: DEC: ' | sed 's/ RA: DEC: //g')
 
 # Right ascension
 # Decimal degrees
-RAd=$(echo $srccoord | awk '{print $1}')
+
+# RAd=$(echo $srccoord | awk '{print $1}')
+
 # h
-RA=$(bc <<< "scale=5; $RAd / 15")
+
+# RA=$(bc <<< "scale=5; $RAd / 15")
 if [[ $RA == .* ]]; then RA=0$RA; fi
 h=$(echo $RA | sed "s/.[0-9]*$//g")
 m=$(bc <<< "scale=5; ($RA - $h) * 60" | sed "s/.[0-9]*$//g")
@@ -165,7 +181,8 @@ if [ ${#m} == 1 ]; then m=0$m ; elif [ ${#m} == 0 ] ; then m=00 ; fi
 if [ ${#s} == 1 ]; then s=0$s ; elif [ ${#s} == 0 ] ; then s=00; fi
 
 # Declination
-DEC=$(echo $srccoord | awk '{print $2}')
+
+# DEC=$(echo $srccoord | awk '{print $2}')
 if [[ $DEC == -* ]]; then DEC=${DEC#"-"}; link="-"; else link="_"; fi
 if [[ $DEC == .* ]]; then DEC=0$DEC; fi
 dg=$(echo $DEC | sed "s/.[0-9]*$//g")
@@ -189,7 +206,9 @@ if [ ! -f $nosrc_file ]; then
 evselect table=$clean_file withfilteredset=Y filteredset=$nosrc_file destruct=Y keepfilteroutput=T expression="region($fbk_file:REGION,X,Y)" -V 0
 fi
 
-bgdXY=$(ebkgreg withsrclist=no withcoords=yes imageset=$img_file x=$RAd y=$DEC r=$srcRas coordtype=EQPOS | grep 'X,Y Sky Coord.' | head -1 | awk '{print$5$6}')
+# bgdXY=$(ebkgreg withsrclist=no withcoords=yes imageset=$img_file x=$RAd y=$DEC r=$srcRas coordtype=EQPOS | grep 'X,Y Sky Coord.' | head -1 | awk '{print$5$6}')
+
+bgdXY=$(ebkgreg withsrclist=no withcoords=yes imageset=$img_file x=$RA y=$DEC r=$srcRas coordtype=EQPOS | grep 'X,Y Sky Coord.' | head -1 | awk '{print$5$6}')
 bgdexp="(X,Y) in CIRCLE($bgdXY,$srcR)"
 
 sleep 1
