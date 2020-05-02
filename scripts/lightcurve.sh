@@ -142,18 +142,18 @@ data=$(cat $path/${DL}_${TW}_${BS}_${GTR}/ds9_variable_sources.reg | grep 'text=
 #rawy=${array[3]}
 #srcR=$((${array[4]} * 64))				# Pixel units
 
-RA=$(echo $data | awk '{print $2}' | sed "s/.$//")
+RAd=$(echo $data | awk '{print $2}' | sed "s/.$//")
 DEC=$(echo $data | awk '{print $3}' | sed "s/.$//")
 R=$(echo $data | awk '{print $4}' | sed "s/.$//")
+srcR=$(echo "$R * 64" | bc)
 
 # echo "ccd=$ccd, rawx=$rawx, rawy=$rawy, r=$srcR"
 
-srcXY=$(ecoordconv imageset=$img_file coordtype=eqpos x=$RA y=$DEC r=$R | tee /dev/tty|grep 'X: Y:'|sed 's/X: Y: //'|sed 's/ /,/g'|sed 's/,//')
+srcXY=$(ecoordconv imageset=$img_file coordtype=eqpos x=$RAd y=$DEC | tee /dev/tty|grep 'X: Y:'|sed 's/X: Y: //'|sed 's/ /,/g'|sed 's/,//')
 
 # Correcting source and background position
 
-# srcexp=$(eregionanalyse imageset=$img_file srcexp="(X,Y) in CIRCLE($srcXY,$srcR)" backval=0.1|tee /dev/tty|grep 'SASCIRCLE'|sed 's/SASCIRCLE: //g')
-srcexp=$(eregionanalyse imageset=$img_file srcexp="(X,Y) in CIRCLE($srcXY,$R)" backval=0.1|tee /dev/tty|grep 'SASCIRCLE'|sed 's/SASCIRCLE: //g')
+srcexp=$(eregionanalyse imageset=$img_file srcexp="(X,Y) in CIRCLE($srcXY,$srcR)" backval=0.1|tee /dev/tty|grep 'SASCIRCLE'|sed 's/SASCIRCLE: //g')
 srcR=$(echo $srcexp | sed "s/(X,Y) in CIRCLE([0-9]*.[0-9]*,[0-9]*.[0-9]*,//" | sed "s/)//")
 # arcsec
 srcRas=$(bc <<< "scale=2; $srcR * 0.05")
@@ -171,7 +171,7 @@ srcRas=$(bc <<< "scale=2; $srcR * 0.05")
 
 # h
 
-# RA=$(bc <<< "scale=5; $RAd / 15")
+RA=$(bc <<< "scale=5; $RAd / 15")
 if [[ $RA == .* ]]; then RA=0$RA; fi
 h=$(echo $RA | sed "s/.[0-9]*$//g")
 m=$(bc <<< "scale=5; ($RA - $h) * 60" | sed "s/.[0-9]*$//g")
@@ -206,9 +206,7 @@ if [ ! -f $nosrc_file ]; then
 evselect table=$clean_file withfilteredset=Y filteredset=$nosrc_file destruct=Y keepfilteroutput=T expression="region($fbk_file:REGION,X,Y)" -V 0
 fi
 
-# bgdXY=$(ebkgreg withsrclist=no withcoords=yes imageset=$img_file x=$RAd y=$DEC r=$srcRas coordtype=EQPOS | grep 'X,Y Sky Coord.' | head -1 | awk '{print$5$6}')
-
-bgdXY=$(ebkgreg withsrclist=no withcoords=yes imageset=$img_file x=$RA y=$DEC r=$srcRas coordtype=EQPOS | grep 'X,Y Sky Coord.' | head -1 | awk '{print$5$6}')
+bgdXY=$(ebkgreg withsrclist=no withcoords=yes imageset=$img_file x=$RAd y=$DEC r=$srcRas coordtype=EQPOS | grep 'X,Y Sky Coord.' | head -1 | awk '{print$5$6}')
 bgdexp="(X,Y) in CIRCLE($bgdXY,$srcR)"
 
 sleep 1
@@ -253,7 +251,8 @@ title3 "lcurve"
 #if [ -f "$(ls $path_out/pgplot.ps)" ]; then
 #	ps2pdf $path_out/pgplot.ps $path_out/${src}_lc_${TW}_xronos.pdf
 #fi
-python3 $SCRIPTS/lcurve.py -path $FOLDER -obs $OBS -name $src -tw $TW -mode medium -pcs $P_chisq -pks $P_KS -n $ID
+
+python3 $SCRIPTS/lcurve.py -path $FOLDER -obs $observation -name $src -tw $TW -mode medium -pcs $P_chisq -pks $P_KS -n $id
 
 end=`date +%s`
 runtime=$((end-start))

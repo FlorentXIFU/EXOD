@@ -63,11 +63,11 @@ if args.src == None :
         args.src = lccorr
     else : 
         args.src = '{0}/{1}/lcurve_{2}/{3}_lc_{2}_src.lc'.format(args.path, args.obs, args.tw, args.name)
-        args.bgd = '{0}/{1}/lcurve_{2}/{3}_lc_{2}_bgd.lc'.format(args.path, args.obs, args.tw, args.src)
-        if not path.exists(args.name) :
+        args.bgd = '{0}/{1}/lcurve_{2}/{3}_lc_{2}_bgd.lc'.format(args.path, args.obs, args.tw, args.name)
+        if not path.exists(args.src) :
             print('ERROR: Source File {0} does not exist'.format(args.src))
             sys.exit()
-        if not path.exists(args.name) :
+        if not path.exists(args.bgd) :
             print('ERROR: Background File {0} does not exist'.format(args.bgd))
             sys.exit()
         
