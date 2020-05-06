@@ -54,6 +54,7 @@ if [[ $1 == "-h" ]] || [[ $1 == "--help" ]] ; then
 	Parameters to use :\n\
 	@path       : full path to the observation\n\
   	@scripts    : full path to the scripts folder\n\
+	@inst	    : type of detector\n\
 	@id         : id number of the detected source within the observation\n\
 	@DL         : Detection level used for the variable sources detection\n\
 	@TW         : Time window used for the variable sources detection\n\
@@ -66,12 +67,13 @@ else
 
 path="$1"
 scripts="$2"
-id="$3"
-DL="$4"
-TW="$5"
+inst="$3"
+id="$4"
+DL="$5"
+TW="$6"
 GTR=1.0
-BS="$6"
-output_log="$7"
+BS="$7"
+output_log="$8"
 
 observation=${path: -10}
 
@@ -84,10 +86,10 @@ title1 "Lightcurve Obs. $observation Src. $id"
 
 sums=$path
 fbks=$path
-clean_file=$path/PN_clean.fits
-gti_file=$path/PN_gti.fits
-img_file=$path/PN_image.fits
-nosrc_file=$path/PN_sourceless.fits
+clean_file=$path/${inst}_clean.fits
+gti_file=$path/${inst}_gti.fits
+img_file=$path/${inst}_image.fits
+nosrc_file=$path/${inst}_sourceless.fits
 path_out=$path/lcurve_${TW}
 if [ ! -d $path_out ]; then mkdir $path_out; fi
 cd $path
@@ -99,13 +101,27 @@ export HEADAS=/home/monrillo/heasoft-6.26.1/x86_64-pc-linux-gnu-libc2.27
 . $HEADAS/headas-init.sh
 . /home/monrillo/SAS/xmmsas_20190531_1155/setsas.sh
 
+# Summary file
 if [ ! -f $path/*SUM.ASC ]; then 
   cp $sums/*$observation*SUM.ASC $path
 fi
+
 sum_file=$(ls $path/*SUM.ASC)
-if [ ! -f $fbks/*$observation*PNS*FBKTSR ]; then 
-  wget -nv "http://nxsa.esac.esa.int/nxsa-sl/servlet/data-action-aio?obsno=${observation}&name=FBKTSR&instname=PN&level=PPS&extension=FTZ" -O $fbks/P${observation}PNS001FBKTSR0000.FTZ; fi
-fbk_file=$(ls $fbks/*$observation*PNS*FBKTSR*)
+
+# FBKTSR
+if [ ! -f $fbks/*$observation*$inst*FBKTSR ]; then 
+  if ["$inst" == "PN"]; then
+    wget -nv "http://nxsa.esac.esa.int/nxsa-sl/servlet/data-action-aio?obsno=${observation}&name=FBKTSR&instname=${inst}&level=PPS&extension=FTZ" -O $fbks/P${observation}${inst}S001FBKTSR0000.FTZ;
+  elif ["$inst" == "M1"]; then
+    wget -nv "http://nxsa.esac.esa.int/nxsa-sl/servlet/data-action-aio?obsno=${observation}&name=FBKTSR&instname=${inst}&level=PPS&extension=FTZ" -O $fbks/P${observation}${inst}S002FBKTSR0000.FTZ;
+  elif ["$inst" == "M2"]; then
+    wget -nv "http://nxsa.esac.esa.int/nxsa-sl/servlet/data-action-aio?obsno=${observation}&name=FBKTSR&instname=${inst}&level=PPS&extension=FTZ" -O $fbks/P${observation}${inst}S003FBKTSR0000.FTZ;
+  fi
+fi
+
+fbk_file=$(ls $fbks/*$observation*$inst*FBKTSR*)
+
+# cifbuild
 if [ ! -f $path/ccf.cif ]; then cifbuild; fi
 
 ################################################################################
@@ -220,7 +236,7 @@ echo -e "\nExtracting data obs. $observation source $src with the following coor
 ################################################################################
 
 title2 "Extracting lightcurve"
-if [ ! -f $path/PN_gti.wi ]; then gti2xronwin -i $path/PN_gti.fits -o $path/PN_gti.wi; fi
+if [ ! -f $path/${inst}_gti.wi ]; then gti2xronwin -i $path/${inst}_gti.fits -o $path/${inst}_gti.wi; fi
 
 #if [ ! -f $path_out/${src}_lc_0.0734_src.lc ] || [ ! -f $path_out/${src}_lc_${TW}_src.lc ] || [ ! -f $path_out/${src}_lccorr_0.0734.lc ]; then
 title3 "evselect 0.0734 s"
@@ -238,8 +254,8 @@ epiclccorr srctslist=$path_out/${src}_lc_0.0734_src.lc eventlist=$clean_file out
 sleep 1
 
 title3 "lcstats"
-lcstats cfile1="$path_out/${src}_lccorr_0.0734.lc" window=$path/PN_gti.wi dtnb=0.0734 nbint=1000000 tchat=2 logname="$path_out/${src}_xronos.log"
-P=$(lcstats cfile1="$path_out/${src}_lccorr_0.0734.lc" window=$path/PN_gti.wi dtnb=0.0734 nbint=1000000 tchat=2 logname="$path_out/${src}_xronos.log" | grep "Prob of constancy")
+lcstats cfile1="$path_out/${src}_lccorr_0.0734.lc" window=$path/${inst}_gti.wi dtnb=0.0734 nbint=1000000 tchat=2 logname="$path_out/${src}_xronos.log"
+P=$(lcstats cfile1="$path_out/${src}_lccorr_0.0734.lc" window=$path/${inst}_gti.wi dtnb=0.0734 nbint=1000000 tchat=2 logname="$path_out/${src}_xronos.log" | grep "Prob of constancy")
 sleep 5
 P_chisq=$(echo $P | sed "s/Chi-Square Prob of constancy. //" | sed "s/ (0 means.*//")
 P_KS=$(echo $P | sed "s/.*Kolm.-Smir. Prob of constancy //" |  sed "s/ (0 means.*//")
@@ -262,7 +278,7 @@ runtime=$((end-start))
 ###
 
 echo -e > $path_out/${src}_region.txt "Source     = $srcexp\nBackground = $bgdexp\nTotal time = $runtime"
-echo -e >> $output_log "$observation $id $src $DL $TW $P_chisq $P_KS"
+echo -e >> $output_log "$observation $id $src $inst $DL $TW $P_chisq $P_KS"
 
 echo -e " # Total time obs. $observation : $runtime seconds"
 echo -e "\nObservation $observation ended\nTotal time = $runtime seconds"

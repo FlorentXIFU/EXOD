@@ -177,16 +177,16 @@ fi
 evselect table=$clean_file imagebinning=binSize imageset=$img_file withimageset=yes xcolumn=X ycolumn=Y ximagebinsize=80 yimagebinsize=80 -V 0
 
 
-if [ "$INST" == "PN" ]; then 
-  echo > $path/PN_processing.log "Rate: $RATE"
+#if [ "$INST" == "PN" ]; then 
+#  echo > $path/PN_processing.log "Rate: $RATE"
 
-elif [ "$INST" == "M1" ]; then 
-  echo > $path/M1_processing.log "Rate: $RATE"
+#elif [ "$INST" == "M1" ]; then 
+#  echo > $path/M1_processing.log "Rate: $RATE"
 
-elif [ "$INST" == "M2" ]; then 
-  echo > $path/M2_processing.log "Rate: $RATE"
+#elif [ "$INST" == "M2" ]; then 
+#  echo > $path/M2_processing.log "Rate: $RATE"
 
-fi
+#fi
 
 echo "Rate = ..." >> $path/${INST}_processing.log
 
