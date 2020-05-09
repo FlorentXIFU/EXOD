@@ -34,5 +34,5 @@ RATE_FILE         = "PN_rate.fits"
 
 # software installation paths
 
-HEADAS = "/home/ines/astrosoft/heasoft-6.25/x86_64-pc-linux-gnu-libc2.27"
-SAS    = "/home/ines/astrosoft/xmmsas_20180620_1732/setsas.sh"
+HEADAS = "/usr/local/heasoft-6.22.1/x86_64-unknown-linux-gnu-libc2.19"
+SAS    = "/usr/local/SAS/xmmsas_20170719_1539/setsas.sh"

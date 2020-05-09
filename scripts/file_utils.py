@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # coding=utf-8
 
 ########################################################################
@@ -235,7 +236,7 @@ class Source(object):
         if self.id_src == 0 : s = '>'
         else :      s = '>>'
 
-        command = f"""
+        command = """
         export SAS_ODF={path};
         export SAS_CCF={path}ccf.cif;
         export HEADAS={FileNames.HEADAS};
