@@ -100,34 +100,13 @@ if [ ! -f $path/ccf.cif ]; then cifbuild; fi
 title "Cleaning events file"
 
 # File names
-if [ "$INST" == "PN" ]; then
-  org_file=$(ls $path/*${OBS}PN*PIEVLI*)
-  clean_file=$path/PN_clean.fits
-  gti_file=$path/PN_gti.fits
-  img_file=$path/PN_image.fits
-  rate_file=$path/PN_rate.fits
-  l=P
 
-elif [ "$INST" == "M1" ]; then
-  org_file=$(ls $path/*${OBS}M1*MIEVLI*)
-  clean_file=$path/M1_clean.fits
-  gti_file=$path/M1_gti.fits
-  img_file=$path/M1_image.fits
-  rate_file=$path/M1_rate.fits
-  l=M
+org_file=$(ls $path/*${OBS}${INST}*PIEVLI*)
+clean_file=$path/${INST}_clean.fits
+gti_file=$path/${INST}_gti.fits
+img_file=$path/${INST}_image.fits
+rate_file=$path/${INST}_rate.fits
 
-elif [ "$INST" == "M2" ]; then
-  org_file=$(ls $path/*${OBS}M2*MIEVLI*)
-  clean_file=$path/M2_clean.fits
-  gti_file=$path/M2_gti.fits
-  img_file=$path/M2_image.fits
-  rate_file=$path/M2_rate.fits
-  l=M
-
-else
-  echo "ERROR: Instrument not recognized"
-  exit
-fi
 
 echo -e "\tRAW FILE   = ${org_file}"
 echo -e "\tCLEAN FILE = ${clean_file}"
@@ -176,17 +155,6 @@ fi
 
 evselect table=$clean_file imagebinning=binSize imageset=$img_file withimageset=yes xcolumn=X ycolumn=Y ximagebinsize=80 yimagebinsize=80 -V 0
 
-
-#if [ "$INST" == "PN" ]; then 
-#  echo > $path/PN_processing.log "Rate: $RATE"
-
-#elif [ "$INST" == "M1" ]; then 
-#  echo > $path/M1_processing.log "Rate: $RATE"
-
-#elif [ "$INST" == "M2" ]; then 
-#  echo > $path/M2_processing.log "Rate: $RATE"
-
-#fi
 
 echo "Rate = ..." >> $path/${INST}_processing.log
 
