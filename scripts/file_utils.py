@@ -16,7 +16,7 @@ Various resources for both detector and renderer
 # Built-in imports
 
 import sys
-sys.path.append('/home/ines/anaconda3/lib/skimage')
+sys.path.append('/usr/local/lib/python2.7/dist-packages/skimage')
 import os
 import time
 from functools import partial
