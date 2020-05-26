@@ -26,11 +26,26 @@ OUTPUT_IMAGE_SRCS = "sources.pdf"
 OUTPUT_IMAGE_ALL  = "variability_whole.pdf"
 
 # Observation files
+#PN
 
-CLEAN_FILE        = "PN_clean.fits"
-GTI_FILE          = "PN_gti.fits"
-IMG_FILE          = "PN_image.fits"
-RATE_FILE         = "PN_rate.fits"
+CLEAN_FILE_PN        = "PN_clean.fits"
+GTI_FILE_PN          = "PN_gti.fits"
+IMG_FILE_PN          = "PN_image.fits"
+RATE_FILE_PN         = "PN_rate.fits"
+
+#MOS 1
+
+CLEAN_FILE_M1        = "M1_clean.fits"
+GTI_FILE_M1          = "M1_gti.fits"
+IMG_FILE_M1          = "M1_image.fits"
+RATE_FILE_M1         = "M1_rate.fits"
+
+#MOS 2
+
+CLEAN_FILE_M2        = "M2_clean.fits"
+GTI_FILE_M2          = "M2_gti.fits"
+IMG_FILE_M2          = "M2_image.fits"
+RATE_FILE_M2         = "M2_rate.fits"
 
 # software installation paths
 

@@ -30,27 +30,34 @@ from file_utils import *
 #                                                                      #
 ########################################################################
 
-def variability_computation(gti, time_interval, acceptable_ratio, start_time, end_time, data) :
+def variability_computation(gti, time_interval, acceptable_ratio, start_time, end_time, inst, data) :
 	"""
 	Function implementing the variability calculation using average technique.
 	@param  gti:     G round, the list of TW cut-off the observation
 	@param  time_interval:   The duration of a time window
 	@param  acceptable_ratio:  The acceptability ratio for a TW - good time ratio
 	@param  start_time:  The t0 instant of the observation
-	@param  end_time: THe tf instant of the observation
+	@param  end_time: The tf instant of the observation
+    	@param  inst:    Type of detector
 	@param  data:    E round, the list of events sorted by their TIME attribute
 	@return: The matrix V_round
 	"""
 
 	# Defining the variables and matrices
+	if inst == 'PN':
+		xMax = 64
+		yMax = 200
+	elif inst == 'M1' or 'M2':
+		xMax = 600
+		yMax = 600
 	n_bins = int(np.ceil((end_time - start_time )/time_interval))
 	stop_time = start_time + n_bins*time_interval
 	if (stop_time - end_time)/time_interval > acceptable_ratio :
 		n_bins = n_bins - 1
 		stop_time = start_time + n_bins * time_interval
 
-	V_mat = np.ones([64,200])
-	counted_events = np.zeros([64,200,n_bins])
+	V_mat = np.ones([xMax,yMax])
+	counted_events = np.zeros([xMax,yMax,n_bins])
 	time_windows = np.arange(start_time, stop_time, time_interval)
 	projection_ratio = np.ones(n_bins)
 
@@ -94,7 +101,7 @@ def variability_computation(gti, time_interval, acceptable_ratio, start_time, en
 			k = int(data[i]['RAWY'])-1
 			for x in range(j-1,j+2) :
 				for y in range(k-1,k+2) :
-					if 0<=x<64 and 0<=y<200 :
+					if 0<=x<xMax and 0<=y<yMax :
 						counted_events[x][y][n] += 1
 			i += 1
 		i += 1
@@ -129,7 +136,7 @@ def variability_computation(gti, time_interval, acceptable_ratio, start_time, en
 ########################################################################
 
 
-def box_computations(variability_matrix, x, y, box_size) :
+def box_computations(variability_matrix, x, y, box_size, inst) :
     """
     Function summing the variability values into a box.
     @param variability_matrix:  The V round matrix
@@ -138,8 +145,12 @@ def box_computations(variability_matrix, x, y, box_size) :
     @param box_size:   The length of a side of a box
     @return: The sum of the variability for each pixel of the box
     """
-    assert x <= 63 - box_size
-    assert y <= 199 - box_size
+    if inst == 'PN' :
+        assert x <= 63 - box_size
+        assert y <= 199 - box_size
+    elif inst == 'M1' or 'M2' :
+        assert x <= 599 - box_size
+        assert y <= 599 - box_size
     # Exception raised if box out of the limits of the CCD
 
     cpt = 0
@@ -187,7 +198,7 @@ def __add_to_detected_areas(x, y, box_size, detected_areas) :
 
 ########################################################################
 
-def variable_areas_detection(lower_limit, box_size, detection_level, variability_matrix) :
+def variable_areas_detection(lower_limit, box_size, detection_level, inst, variability_matrix) :
 	"""
 	Function detecting variable areas into a variability_matrix.
 	@param lower_limit:         The lower_limit value is the smallest variability value needed to consider a pixel variable
@@ -201,13 +212,11 @@ def variable_areas_detection(lower_limit, box_size, detection_level, variability
 
 	box_count = 0
 
-	#detection_level = 4.56602579 * log10(TW) + 0.09141909
-
 	for i in range(len(variability_matrix) - box_size) :
 		j = 0
 		m = 0	# boxes above detection level counter
 		while j < len(variability_matrix[i]) - box_size :
-			box_count = box_computations(variability_matrix, i, j, box_size)
+			box_count = box_computations(variability_matrix, i, j, box_size, inst)
 
 			# If there's nothing into the box, it is completely skipped
 			if box_count == 0 :
@@ -221,7 +230,7 @@ def variable_areas_detection(lower_limit, box_size, detection_level, variability
 
 	return output
 
-def variable_sources_position(variable_areas_matrix, obs, path_out, reg_file, log_file, img_file) :
+def variable_sources_position(variable_areas_matrix, obs, inst, path_out, reg_file, log_file, img_file) :
 	"""
 	Function computing the position of the detected varable sources.
 	@param variable_areas_matrix: variable_areas_detection output
@@ -232,9 +241,13 @@ def variable_sources_position(variable_areas_matrix, obs, path_out, reg_file, lo
 
 	sources = []
 	cpt_source = 0
+	if inst == 'PN' :
+		ccdnb = 12
+	elif inst == 'M1' or 'M2' :
+		ccdnb = 7
 
 	# Computing source position
-	for ccd in range(12) :
+	for ccd in range(ccdnb) :
 	    for source in variable_areas_matrix[ccd] :
 	        center_x = round(sum([p[0] for p in source]) / len(source), 2)
 	        center_y = round(sum([p[1] for p in source]) / len(source), 2)
@@ -242,31 +255,31 @@ def variable_sources_position(variable_areas_matrix, obs, path_out, reg_file, lo
 	        r = round(sqrt( (max([abs(p[0] - center_x) for p in source]))**2 + (max([abs(p[1] - center_y) for p in source]))**2 ), 2)
 
 	        # Avoiding bad pixels
-	        if [ccd, int(center_x)] not in [[4,11], [4,12], [4,13], [5,12], [10,28]] :
+	        if [inst, ccd, int(center_x)] not in [['PN',4,11], ['PN',4,12], ['PN',4,13], ['PN',5,12], ['PN',10,28]] :
 	            cpt_source += 1
-	            sources.append([cpt_source, ccd+1, center_x, center_y, r])
+	            sources.append([cpt_source, inst, ccd+1, center_x, center_y, r])
 
 
 	# Making output table
-	source_table = Table(names=('ID', 'CCDNR', 'RAWX', 'RAWY', 'RAWR', 'X', 'Y', 'SKYR', 'RA', 'DEC', 'R'), dtype=('i2', 'i2', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8'))
+	source_table = Table(names=('ID', 'INST', 'CCDNR', 'RAWX', 'RAWY', 'RAWR', 'X', 'Y', 'SKYR', 'RA', 'DEC', 'R'), dtype=('i2', 'U25', 'i2', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8'))
 
 	# Head text
 	text = """# Region file format: DS9 version 4.0 global
 # XMM-Newton OBSID {0}
-# Instrument PN
+# Instrument {1}
 # EXOD variable sources
 
 global color=green font="times 8 normal roman"
 j2000
 
-""".format(obs)
+""".format(obs, inst)
 
 	for i in range(len(sources)) :
 		# Getting Source class
 		src = Source(sources[i])
 		src.sky_coord(path_out, img_file, log_file)
 		# Adding source to table
-		source_table.add_row([src.id_src, src.ccd, src.rawx, src.rawy, src.rawr, src.x, src.y, src.skyr, src.ra, src.dec, src.r])
+		source_table.add_row([src.id_src, src.inst, src.ccd, src.rawx, src.rawy, src.rawr, src.x, src.y, src.skyr, src.ra, src.dec, src.r])
 		# ds9 text
 		text = text + 'circle {0}, {1}, {2}" # text="{3}"\n'.format(src.ra, src.dec, src.r, src.id_src)
 

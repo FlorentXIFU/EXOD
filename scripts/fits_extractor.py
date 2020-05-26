@@ -47,18 +47,22 @@ def extraction_photons(events_file):
     # Récupération des EVENTS
     events = hdulist[1].data
     header = hdulist[1].header
+    inst = header['INSTRUME']
+    if inst == 'EPN' :
+        ccdnb = 12
+    elif inst == 'EMOS1' or 'EMOS2' :
+        ccdnb = 7
+    
     events_filtered = []
-    for i in range(12) :
+    for i in range(ccdnb) :
         events_filtered.append([])
-
 
     for evt in events :
         events_filtered[int(evt['CCDNR'])-1].append(evt)
 
-
     hdulist.close()
     events_filtered_sorted = []
-    for i in range(12) :
+    for i in range(ccdnb) :
         events_filtered_sorted.append(sorted(events_filtered[i], key=lambda k: int(k['TIME'])))
 
     return events_filtered_sorted, header

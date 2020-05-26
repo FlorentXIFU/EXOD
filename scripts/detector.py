@@ -49,9 +49,9 @@ from renderer import *
 parser = argparse.ArgumentParser()
 
 # Path to files
-parser.add_argument("-evts", help="Name of the clean observation file", type=str, nargs='?', default=FileNames.CLEAN_FILE)
-parser.add_argument("-gti", help="Name of the GTI file", type=str, nargs='?', default=FileNames.GTI_FILE)
-parser.add_argument("-img", help="Name of the image file", type=str, nargs='?', default=FileNames.IMG_FILE)
+#parser.add_argument("-evts", help="Name of the clean observation file", type=str, nargs='?', default=FileNames.CLEAN_FILE_PN)
+#parser.add_argument("-gti", help="Name of the GTI file", type=str, nargs='?', default=FileNames.GTI_FILE_PN)
+#parser.add_argument("-img", help="Name of the image file", type=str, nargs='?', default=FileNames.IMG_FILE_PN)
 parser.add_argument("-path", help="Path to the folder containing the observation files", type=str)
 parser.add_argument("-out", help="Path to the folder where the output files will be stored", default=None, type=str)
 
@@ -65,6 +65,7 @@ parser.add_argument("-mta", "--max-threads-allowed", dest="mta", help="Maximal n
 # Arguments set by default
 parser.add_argument("-creator", dest="creator", help="User creating the variability files", nargs='?', default=os.environ['USER'], type=str)
 parser.add_argument("-obs", "--observation", dest="obs", help="Observation ID", default=None, nargs='?', type=str)
+parser.add_argument("-inst", "--instrument", dest="inst", help="Type of detector", default='PN', nargs='?', type=str)
 
 # Boolean flags
 parser.add_argument('--render', help='Plot variability output, produce pdf', action='store_true')
@@ -79,10 +80,24 @@ if args.path[-1] != '/' :
 if args.out != None and args.out[-1] != '/' :
     args.out = args.out + '/'
 if args.out == None :
-    args.out = args.path + '{}_{}_{}_{}/'.format(int(args.dl), int(args.tw), args.bs, args.gtr)
-args.evts = args.path + args.evts
-args.gti  = args.path + args.gti
-args.img  = args.path + args.img
+    args.out = args.path + '{}_{}_{}_{}_{}/'.format(int(args.dl), int(args.tw), args.bs, args.gtr, args.inst)
+
+if args.inst == 'PN' :
+    args.evts = args.path + FileNames.CLEAN_FILE_PN
+    args.gti  = args.path + FileNames.GTI_FILE_PN
+    args.img  = args.path + FileNames.IMG_FILE_PN
+    ccdnb = 12
+if args.inst == 'M1' :
+    args.evts = args.path + FileNames.CLEAN_FILE_M1
+    args.gti  = args.path + FileNames.GTI_FILE_M1
+    args.img  = args.path + FileNames.IMG_FILE_M1
+    ccdnb = 7
+if args.inst == 'M2' :
+    args.evts = args.path + FileNames.CLEAN_FILE_M2
+    args.gti  = args.path + FileNames.GTI_FILE_M2
+    args.img  = args.path + FileNames.IMG_FILE_M2
+    ccdnb = 7
+
 
 ########################################################################
 #                                                                      #
@@ -100,11 +115,12 @@ def main_fct() :
     print(vars(args))
 
     print("""
-        DETECTION LEVEL = {0}
-        TIME WINDOW     = {1}
-        BOX SIZE        = {2}
-        GOOD TIME RATIO = {3}
-        """.format(args.dl, args.tw, args.bs, args.gtr))
+        INSTRUMENT      = {0}
+        DETECTION LEVEL = {1}
+        TIME WINDOW     = {2}
+        BOX SIZE        = {3}
+        GOOD TIME RATIO = {4}
+        """.format(args.inst, args.dl, args.tw, args.bs, args.gtr))
 
     print(" Writing output to folder '{0}'".format(args.out))
 
@@ -152,6 +168,7 @@ def main_fct() :
                   "CREATOR" : args.creator,
                   "DATE"    : time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()),
                   "OBS_ID"  : args.obs,
+                  "INST"    : args.inst,
                   "TW"      : args.tw,
                   "GTR"     : args.gtr,
                   "DL"      : args.dl,
@@ -168,7 +185,7 @@ def main_fct() :
             close_files(log_f, var_f, var_per_tw_f, detected_var_areas_f, tws_f, detected_var_sources_f)
             exit(-2)
 
-        time_windows = []
+        # Computation of initial and final time
         t0_observation = min([evt['TIME'] for ccd in data for evt in ccd])
         tf_observation = max([evt['TIME'] for ccd in data for evt in ccd])
 
@@ -179,21 +196,26 @@ def main_fct() :
         # Computing v_matrix
         v_matrix = []
 
-        var_calc_partial = partial(variability_computation, gti_list, args.tw, args.gtr, t0_observation, tf_observation)
+        var_calc_partial = partial(variability_computation, gti_list, args.tw, args.gtr, t0_observation, tf_observation, args.inst)
 
         with Pool(args.mta) as p:
             v_matrix = p.map(var_calc_partial, data)
 
-        # Aplying CCD configuration
-        data_v = ccd_config(v_matrix)
+        # Applying CCD configuration
+        if args.inst == 'PN' :
+            data_v = PN_config(v_matrix)
+        elif args.inst == 'M1' or 'M2' :
+            data_v = MOS_config(v_matrix)
+        
+        # Applying geometrical transformation
         img_v  = data_transformation(data_v, header)
 
     ###
     # Detecting variable areas and sources
     ###
-
+        
         print(" Detecting variable sources\t {:7.2f} s".format(time.time() - original_time))
-        median = np.median([v_matrix[ccd][i][j] for ccd in range(12) for i in range(len(v_matrix[ccd])) for j in range(len(v_matrix[ccd][i]))])
+        median = np.median([v_matrix[ccd][i][j] for ccd in range(ccdnb) for i in range(len(v_matrix[ccd])) for j in range(len(v_matrix[ccd][i]))])
 
         # Avoiding a too small median value for detection
         print("\n\tMedian\t\t{0}".format(median))
@@ -204,14 +226,14 @@ def main_fct() :
         variable_areas = []
 
         # Currying the function for the pool of threads
-        variable_areas_detection_partial = partial(variable_areas_detection, median, args.bs, args.dl)
+        variable_areas_detection_partial = partial(variable_areas_detection, median, args.bs, args.dl, args.inst)
         print("\tBox counts\t{0}".format(args.dl * ((args.bs**2))))
         # Performing parallel detection on each CCD
         with Pool(args.mta) as p:
             variable_areas = p.map(variable_areas_detection_partial, v_matrix)
 
         # Variable sources
-        sources = variable_sources_position(variable_areas, args.obs, args.path, reg_f, log_f, args.img)
+        sources = variable_sources_position(variable_areas, args.obs, args.inst, args.path, reg_f, log_f, args.img)
 
         print("\tNb of sources\t{0}\n".format(len(sources)))
 

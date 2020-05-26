@@ -15,7 +15,6 @@ Various resources for both detector and renderer
 # Built-in imports
 
 import sys
-sys.path.append('/home/monrillo/anaconda3/lib/skimage')
 import os
 import time
 from functools import partial
@@ -189,6 +188,7 @@ class Source(object):
 
     Attributes:\n
     id_src:  The identifier number of the source\n
+    inst:    The type of CCD\n
     ccd:     The CCD where the source was detected at\n
     rawx:    The x coordinate on the CCD\n
     rawy:    The y coordinate on the CCD\n
@@ -202,6 +202,7 @@ class Source(object):
         Constructor for Source class. Computes the x and y attributes.
         @param src : source, output of variable_sources_position
             id_src:  The identifier number of the source
+            inst:    The type of CCD
             ccd:     The CCD where the source was detected at
             rawx:    The x coordinate on the CCD
             rawy:    The y coordinate on the CCD
@@ -210,10 +211,11 @@ class Source(object):
         super(Source, self).__init__()
 
         self.id_src = src[0]
-        self.ccd = src[1]
-        self.rawx = src[2]
-        self.rawy = src[3]
-        self.rawr = src[4]
+        self.inst = src[1]
+        self.ccd = src[2]
+        self.rawx = src[3]
+        self.rawy = src[4]
+        self.rawr = src[5]
         self.x = None
         self.y = None
         self.skyr = self.rawr * 64
@@ -288,9 +290,9 @@ def read_sources_from_file(file_path, comment_token='#', separator=';') :
 
 ########################################################################
 
-def ccd_config(data_matrix) :
+def PN_config(data_matrix) :
     """
-    Arranges the variability data
+    Arranges the variability data for EPIC_PN
     """
     data_v = []
 
@@ -309,6 +311,43 @@ def ccd_config(data_matrix) :
     return data_v
 
 ########################################################################
+
+def MOS_config(data_matrix) :
+    """
+    Arranges the variability data for EPIC_MOS
+    """
+    data_v = []
+    data_1 = []
+    data_2 = []
+    data_3 = []
+    corner = np.zeros((300,600))
+
+    # XMM-Newton EPIC-mos CCD arrangement
+    ccds = [[3,4],[2,0,5],[1,6]]
+    
+    # First part
+    data_1.extend(corner)
+    for c in ccds[0] :
+        data_1.extend(np.fliplr(np.transpose(data_matrix[c])))
+    data_1.extend(corner)
+    # Second part
+    for c in ccds[1] :
+        data_2.extend(np.fliplr(np.transpose(data_matrix[c])))
+    # Third part
+    data_3.extend(corner)
+    for c in ccds[2] :
+        data_3.extend(np.fliplr(np.transpose(data_matrix[c])))
+    data_3.extend(corner)
+
+    # Building data matrix
+    data_v.extend(np.transpose(data_1))
+    data_v.extend(np.transpose(data_2))
+    data_v.extend(np.transpose(data_3))
+    #data_v = np.transpose(data_v)
+        
+    return data_v
+
+########################################################################
 #                                                                      #
 # Geometrical transformations                                          #
 #                                                                      #
@@ -319,7 +358,7 @@ def data_transformation(data, header) :
     Performing geometrical transformations from raw coordinates to sky coordinates
     @param data: variability matrix
     @param header: header of the clean events file
-    @return: transformed variability data
+    flip@return: transformed variability data
     """
 
     # Header information

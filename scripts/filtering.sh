@@ -101,7 +101,7 @@ title "Cleaning events file"
 
 # File names
 
-org_file=$(ls $path/*${OBS}${INST}*PIEVLI*)
+org_file=$(ls $path/*${OBS}${INST}*IEVLI*)
 clean_file=$path/${INST}_clean.fits
 gti_file=$path/${INST}_gti.fits
 img_file=$path/${INST}_image.fits
@@ -149,14 +149,12 @@ elif [ "$INST" == "M1" ] || [ "$INST" == "M2" ]; then
 
 fi
 
-#ds9 $events_file -bin factor 64 -scale log -cmap bb -mode region &
-
 # Creating image file
 
 evselect table=$clean_file imagebinning=binSize imageset=$img_file withimageset=yes xcolumn=X ycolumn=Y ximagebinsize=80 yimagebinsize=80 -V 0
 
 
-echo "Rate = ..." >> $path/${INST}_processing.log
+echo "Rate = $RATE" >> $path/${INST}_processing.log
 
 echo "The end" 
 date 
