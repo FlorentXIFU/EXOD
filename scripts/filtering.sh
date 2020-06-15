@@ -144,8 +144,7 @@ if [ "$INST" == "PN" ]; then
 
 elif [ "$INST" == "M1" ] || [ "$INST" == "M2" ]; then
 
-  evselect table=$org_file withfilteredset=Y filteredset=$clean_file destruct=Y keepfilteroutput=T expression="#XMMEA_EM && gti($gti_file,TIME) && (PATTERN<=12) && (PI in [200:10000])" -V 0
-# PI > 500 for avoiding thermal noise ?
+  evselect table=$org_file withfilteredset=Y filteredset=$clean_file destruct=Y keepfilteroutput=T expression="#XMMEA_EM && gti($gti_file,TIME) && (PATTERN<=12) && (PI in [500:10000])" -V 0
 
 fi
 

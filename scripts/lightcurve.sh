@@ -109,15 +109,6 @@ fi
 sum_file=$(ls $path/*SUM.ASC)
 
 # FBKTSR
-if [ ! -f $fbks/*$observation*$inst*FBKTSR ]; then 
-  if ["$inst" == "PN"]; then
-    wget -nv "http://nxsa.esac.esa.int/nxsa-sl/servlet/data-action-aio?obsno=${observation}&name=FBKTSR&instname=${inst}&level=PPS&extension=FTZ" -O $fbks/P${observation}${inst}S001FBKTSR0000.FTZ;
-  elif ["$inst" == "M1"]; then
-    wget -nv "http://nxsa.esac.esa.int/nxsa-sl/servlet/data-action-aio?obsno=${observation}&name=FBKTSR&instname=${inst}&level=PPS&extension=FTZ" -O $fbks/P${observation}${inst}S002FBKTSR0000.FTZ;
-  elif ["$inst" == "M2"]; then
-    wget -nv "http://nxsa.esac.esa.int/nxsa-sl/servlet/data-action-aio?obsno=${observation}&name=FBKTSR&instname=${inst}&level=PPS&extension=FTZ" -O $fbks/P${observation}${inst}S003FBKTSR0000.FTZ;
-  fi
-fi
 
 fbk_file=$(ls $fbks/*$observation*$inst*FBKTSR*)
 
@@ -133,8 +124,7 @@ if [ ! -f $path/ccf.cif ]; then cifbuild; fi
 title2 "Preliminaries"
 
 cd $path_out
-if [ ! -f $path/${DL}_${TW}_${BS}_${GTR}/sources.pdf ]; then 
-  python3 -W"ignore" $scripts/renderer.py $path/${DL}_${TW}_${BS}_${GTR} $clean_file -obs $observation -tw $TW -dl $DL -bs $BS; fi
+
 if [ ! -f $img_file ]; then
   evselect table=$clean_file imagebinning=binSize imageset=$img_file withimageset=yes xcolumn=X ycolumn=Y ximagebinsize=80 yimagebinsize=80 -V 0
 fi
@@ -143,27 +133,18 @@ fi
 # Reading data from the detected_variable_sources file
 ###
 
-# data=$(cat $path/${DL}_${TW}_${GTR}_${BS}/detected_variable_sources.csv | grep "^${id};")
-
-data=$(cat $path/${DL}_${TW}_${BS}_${GTR}/ds9_variable_sources.reg | grep 'text="'$id'"')
+data=$(cat $path/${DL}_${TW}_${BS}_${GTR}_${inst}/ds9_variable_sources.reg | grep 'text="'$id'"')
 
 ###
 # Defining source position
 ###
-
-#IFS=';' read -r -a array <<< "$data"
-#n=${array[0]}
-#ccd=${array[1]}
-#rawx=${array[2]}
-#rawy=${array[3]}
-#srcR=$((${array[4]} * 64))				# Pixel units
 
 RAd=$(echo $data | awk '{print $2}' | sed "s/.$//")
 DEC=$(echo $data | awk '{print $3}' | sed "s/.$//")
 R=$(echo $data | awk '{print $4}' | sed "s/.$//")
 srcR=$(echo "$R * 64" | bc)
 
-# echo "ccd=$ccd, rawx=$rawx, rawy=$rawy, r=$srcR"
+# echo "data=$data, ccd=$ccd, RAd=$RAd, DEC=$DEC, R=$R, srcR=$srcR"
 
 srcXY=$(ecoordconv imageset=$img_file coordtype=eqpos x=$RAd y=$DEC | tee /dev/tty|grep 'X: Y:'|sed 's/X: Y: //'|sed 's/ /,/g'|sed 's/,//')
 
@@ -178,16 +159,9 @@ srcRas=$(bc <<< "scale=2; $srcR * 0.05")
 # Source name and coordinates
 ###
 
-# srccoord=$(ecoordconv imageset=$img_file coordtype=raw x=$rawx y=$rawy ccdno=$ccd | tee /dev/tty|grep ' RA: DEC: ' | sed 's/ RA: DEC: //g')
-
-# Right ascension
-# Decimal degrees
-
-# RAd=$(echo $srccoord | awk '{print $1}')
-
-# h
-
+# Right ascension in hours
 RA=$(bc <<< "scale=5; $RAd / 15")
+
 if [[ $RA == .* ]]; then RA=0$RA; fi
 h=$(echo $RA | sed "s/.[0-9]*$//g")
 m=$(bc <<< "scale=5; ($RA - $h) * 60" | sed "s/.[0-9]*$//g")
@@ -210,7 +184,7 @@ if [ ${#as} == 1 ]; then as=0$as ; elif [ ${#as} == 0 ] ; then as=00; fi
 if [[ $link == "-" ]]; then DEC=$link$DEC; fi
 
 sleep 1
-# Source name
+# Source namedg$am$as
 src=J$h$m$s$link$dg$am$as
 echo -e "\n\t$src\n"
 
@@ -219,7 +193,7 @@ echo -e "\n\t$src\n"
 ###
 
 if [ ! -f $nosrc_file ]; then
-evselect table=$clean_file withfilteredset=Y filteredset=$nosrc_file destruct=Y keepfilteroutput=T expression="region($fbk_file:REGION,X,Y)" -V 0
+evselect table=$clean_file withfilteredset=Y filteredset=$nosrc_file destruct=Y keepfilteroutput=T expression="region($fbk_file:REGION,X,Y)" #-V 0
 fi
 
 bgdXY=$(ebkgreg withsrclist=no withcoords=yes imageset=$img_file x=$RAd y=$DEC r=$srcRas coordtype=EQPOS | grep 'X,Y Sky Coord.' | head -1 | awk '{print$5$6}')
@@ -238,24 +212,33 @@ echo -e "\nExtracting data obs. $observation source $src with the following coor
 title2 "Extracting lightcurve"
 if [ ! -f $path/${inst}_gti.wi ]; then gti2xronwin -i $path/${inst}_gti.fits -o $path/${inst}_gti.wi; fi
 
-#if [ ! -f $path_out/${src}_lc_0.0734_src.lc ] || [ ! -f $path_out/${src}_lc_${TW}_src.lc ] || [ ! -f $path_out/${src}_lccorr_0.0734.lc ]; then
-title3 "evselect 0.0734 s"
-evselect table=$clean_file energycolumn=PI expression="$srcexp" withrateset=yes rateset=$path_out/${src}_lc_0.0734_src.lc timebinsize=0.0734 maketimecolumn=yes makeratecolumn=yes -V 0
-evselect table=$nosrc_file energycolumn=PI expression="$bgdexp" withrateset=yes rateset=$path_out/${src}_lc_0.0734_bgd.lc timebinsize=0.0734 maketimecolumn=yes makeratecolumn=yes -V 0
+title3 "Frame time"
+frmtime=$(hexdump -e '80/1 "%_p" "\n"' $clean_file | grep -m 1 FRMTIME | awk '{print $3}')
+frmtime=$(bc <<< "$frmtime * 0.001")
+frmtime=$(bc <<< "scale=3; ($frmtime + 0.001)/1")
+if [[ $frmtime == .* ]]; then frmtime=0$frmtime; fi
+
+sleep 1
+echo -e "\nFrame time = $frmtime"
+
+title3 "evselect $frmtime s"
+evselect table=$clean_file energycolumn=PI expression="$srcexp" withrateset=yes rateset=$path_out/${src}_lc_${frmtime}_src.lc timebinsize=$frmtime maketimecolumn=yes makeratecolumn=yes -V 0
+evselect table=$nosrc_file energycolumn=PI expression="$bgdexp" withrateset=yes rateset=$path_out/${src}_lc_${frmtime}_bgd.lc timebinsize=$frmtime maketimecolumn=yes makeratecolumn=yes -V 0
 
 title3 "evselect $TW s"
 evselect table=$clean_file energycolumn=PI expression="$srcexp" withrateset=yes rateset=$path_out/${src}_lc_${TW}_src.lc timebinsize=$TW maketimecolumn=yes makeratecolumn=yes -V 0
 evselect table=$nosrc_file energycolumn=PI expression="$bgdexp" withrateset=yes rateset=$path_out/${src}_lc_${TW}_bgd.lc timebinsize=$TW maketimecolumn=yes makeratecolumn=yes -V 0
 
 title3 "epiclccorr"
-epiclccorr srctslist=$path_out/${src}_lc_0.0734_src.lc eventlist=$clean_file outset=$path_out/${src}_lccorr_0.0734.lc bkgtslist=$path_out/${src}_lc_0.0734_bgd.lc withbkgset=yes applyabsolutecorrections=yes -V 0
-#fi
+epiclccorr srctslist=$path_out/${src}_lc_${frmtime}_src.lc eventlist=$clean_file outset=$path_out/${src}_lccorr_${frmtime}.lc bkgtslist=$path_out/${src}_lc_${frmtime}_bgd.lc withbkgset=yes applyabsolutecorrections=yes -V 0
+
 
 sleep 1
 
 title3 "lcstats"
-lcstats cfile1="$path_out/${src}_lccorr_0.0734.lc" window=$path/${inst}_gti.wi dtnb=0.0734 nbint=1000000 tchat=2 logname="$path_out/${src}_xronos.log"
-P=$(lcstats cfile1="$path_out/${src}_lccorr_0.0734.lc" window=$path/${inst}_gti.wi dtnb=0.0734 nbint=1000000 tchat=2 logname="$path_out/${src}_xronos.log" | grep "Prob of constancy")
+lcstats cfile1="$path_out/${src}_lccorr_${frmtime}.lc" window=$path/${inst}_gti.wi dtnb=$frmtime nbint=1000000 tchat=2 logname="$path_out/${src}_xronos.log"
+P=$(lcstats cfile1="$path_out/${src}_lccorr_${frmtime}.lc" window=$path/${inst}_gti.wi dtnb=$frmtime nbint=1000000 tchat=2 logname="$path_out/${src}_xronos.log" | grep "Prob of constancy")
+
 sleep 5
 P_chisq=$(echo $P | sed "s/Chi-Square Prob of constancy. //" | sed "s/ (0 means.*//")
 P_KS=$(echo $P | sed "s/.*Kolm.-Smir. Prob of constancy //" |  sed "s/ (0 means.*//")
@@ -268,7 +251,7 @@ title3 "lcurve"
 #	ps2pdf $path_out/pgplot.ps $path_out/${src}_lc_${TW}_xronos.pdf
 #fi
 
-python3 $SCRIPTS/lcurve.py -path $FOLDER -obs $observation -name $src -tw $TW -mode medium -pcs $P_chisq -pks $P_KS -n $id
+python3 $SCRIPTS/lcurve.py -path $FOLDER -obs $observation -inst $inst -name $src -tw $TW -mode medium -pcs $P_chisq -pks $P_KS -n $id
 
 end=`date +%s`
 runtime=$((end-start))

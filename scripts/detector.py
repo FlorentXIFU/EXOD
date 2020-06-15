@@ -204,11 +204,16 @@ def main_fct() :
         # Applying CCD configuration
         if args.inst == 'PN' :
             data_v = PN_config(v_matrix)
-        elif args.inst == 'M1' or 'M2' :
-            data_v = MOS_config(v_matrix)
+        elif args.inst == 'M1' :
+            data_v = M1_config(v_matrix)
+        elif args.inst == 'M2' :
+            data_v = M2_config(v_matrix)
         
         # Applying geometrical transformation
-        img_v  = data_transformation(data_v, header)
+        if args.inst == 'PN' :
+            img_v  = data_transformation_PN(data_v, header)
+        elif args.inst == 'M1' or 'M2' :
+            img_v  = data_transformation_MOS(data_v, header)
 
     ###
     # Detecting variable areas and sources

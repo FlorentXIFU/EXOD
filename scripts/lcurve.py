@@ -37,6 +37,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-path", dest="path", help="Path to the observation files", nargs='?', type=str)
 parser.add_argument("-name", dest="name", help="Source name", nargs='?', type=str)
 parser.add_argument("-obs", help="Observation identifier", nargs='?', type=str, default="")
+parser.add_argument("-inst", help="Type of detector", nargs='?', type=str, default="PN")
 parser.add_argument("-src", help="Path to the source's lightcurve fits file", nargs='?', type=str, default=None)
 parser.add_argument("-bgd", help="Path to the background's lightcurve fits file", nargs='?', type=str, default=None)
 parser.add_argument("-gti", help="Path to the GTI of the observation", nargs='?', type=str, default=None)
@@ -73,7 +74,7 @@ if args.src == None :
         
 # GTI file
 if args.gti == None :
-    args.gti = '{0}/{1}/PN_gti.fits'.format(args.path, args.obs)
+    args.gti = '{0}/{1}/{2}_gti.fits'.format(args.path, args.obs, args.inst)
     if not path.exists(args.gti) :
         print('ERROR: File {0} does not exist'.format(args.gti))
         sys.exit()
@@ -246,13 +247,18 @@ elif "colo" in args.mode :
 #plt.legend(loc='upper right', fontsize=10)
 plt.xlabel("Time (s)", fontsize=16)
 plt.ylabel("counts s$^{-1}$", fontsize=16)
-# Text
-plt.text(0.03, 0.90, args.n, transform = ax.transAxes, fontsize=16)
-plt.text(0.1, 0.90, "OBS {0}".format(args.obs), transform = ax.transAxes, fontsize=16)
-plt.text(0.1, 0.80, src, transform = ax.transAxes, fontsize=16)
+
+# Title
+# Info
+plt.text(0.3, 1.16, "OBS : {0}".format(args.obs), transform = ax.transAxes, fontsize=16)
+
+plt.text(0.03, 1.1, "id : {0}".format(args.n), transform = ax.transAxes, fontsize=16)
+plt.text(0.2, 1.1, "inst : {0}".format(args.inst), transform = ax.transAxes, fontsize=16)
+plt.text(0.5, 1.1, "src : {0}".format(src), transform = ax.transAxes, fontsize=16)
 # Probabilities of constancy
-plt.text(0.95, 0.90, r"P($\chi^2$) = {0:.2e} ".format(args.pcs), horizontalalignment='right', transform = ax.transAxes, fontsize=16)
-plt.text(0.95, 0.80, r"P(KS) = {0:.2e} ".format(args.pks), horizontalalignment='right', transform = ax.transAxes, fontsize=16)
+plt.text(0.1, 1.03, r"P($\chi^2$) = {0:.2e} ".format(args.pcs), transform = ax.transAxes, fontsize=16)
+plt.text(0.52, 1.03, r"P(KS) = {0:.2e} ".format(args.pks), transform = ax.transAxes, fontsize=16)
+
 # Setup
 plt.xlim(xmin, xmax)
 plt.ylim(ymin, ymax)

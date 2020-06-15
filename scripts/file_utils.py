@@ -312,38 +312,45 @@ def PN_config(data_matrix) :
 
 ########################################################################
 
-def MOS_config(data_matrix) :
+def M1_config(data_matrix) :
     """
-    Arranges the variability data for EPIC_MOS
+    Arranges the variability data for EPIC_MOS_1
     """
-    data_v = []
-    data_1 = []
-    data_2 = []
-    data_3 = []
     corner = np.zeros((300,600))
-
-    # XMM-Newton EPIC-mos CCD arrangement
-    ccds = [[3,4],[2,0,5],[1,6]]
     
     # First part
-    data_1.extend(corner)
-    for c in ccds[0] :
-        data_1.extend(np.fliplr(np.transpose(data_matrix[c])))
-    data_1.extend(corner)
+    data_1 = np.concatenate((corner,data_matrix[1].T,np.flip(data_matrix[6].T),corner), axis=0)
+    
     # Second part
-    for c in ccds[1] :
-        data_2.extend(np.fliplr(np.transpose(data_matrix[c])))
+    data_2 = np.concatenate((data_matrix[2].T,np.flipud(data_matrix[0]),np.flip(data_matrix[5].T)), axis=0)
+    
     # Third part
-    data_3.extend(corner)
-    for c in ccds[2] :
-        data_3.extend(np.fliplr(np.transpose(data_matrix[c])))
-    data_3.extend(corner)
+    data_3 = np.concatenate((corner,data_matrix[3].T,np.flip(data_matrix[4].T),corner), axis=0)
 
     # Building data matrix
-    data_v.extend(np.transpose(data_1))
-    data_v.extend(np.transpose(data_2))
-    data_v.extend(np.transpose(data_3))
-    #data_v = np.transpose(data_v)
+    data_v = np.rot90(np.concatenate((data_1, data_2, data_3), axis=1))
+        
+    return data_v
+
+########################################################################
+
+def M2_config(data_matrix) :
+    """
+    Arranges the variability data for EPIC_MOS_2
+    """
+    corner = np.zeros((300,600))
+    
+    # First part
+    data_1 = np.concatenate((corner,data_matrix[1].T,np.flip(data_matrix[6].T),corner), axis=0)
+    
+    # Second part
+    data_2 = np.concatenate((data_matrix[2].T,np.flipud(data_matrix[0]),np.flip(data_matrix[5].T)), axis=0)
+    
+    # Third part
+    data_3 = np.concatenate((corner,data_matrix[3].T,np.flip(data_matrix[4].T),corner), axis=0)
+
+    # Building data matrix
+    data_v = np.flip(np.concatenate((data_1, data_2, data_3), axis=1))
         
     return data_v
 
@@ -353,7 +360,7 @@ def MOS_config(data_matrix) :
 #                                                                      #
 ########################################################################
 
-def data_transformation(data, header) :
+def data_transformation_PN(data, header) :
     """
     Performing geometrical transformations from raw coordinates to sky coordinates
     @param data: variability matrix
@@ -363,7 +370,6 @@ def data_transformation(data, header) :
 
     # Header information
     angle = header['PA_PNT']
-    dlim = [header['REFXLMIN'], header['REFXLMAX'], header['REFYLMIN'], header['REFYLMAX']]
 
     xproj = [float(header['TDMIN6']), float(header['TDMAX6'])] # projected x limits
     yproj = [float(header['TDMIN7']), float(header['TDMAX7'])] # projected y limits
@@ -385,6 +391,46 @@ def data_transformation(data, header) :
     dataR = np.flipud(nd.rotate(data, angle, reshape = True))
     ## Resizing
     dataT = skimage.transform.resize(dataR, (pixY, pixX), mode='constant', cval=0.0) # xy reversed
+    ## Padding
+    dataP = np.pad(dataT, (padY, padX), 'constant', constant_values=0) # xy reversed
+
+    return dataP
+
+########################################################################
+
+def data_transformation_MOS(data, header) :
+    """
+    Performing geometrical transformations from raw coordinates to sky coordinates
+    @param data: variability matrix
+    @param header: header of the clean events file
+    flip@return: transformed variability data
+    """
+
+    # Header information
+    angle = header['PA_PNT']
+
+    xproj = [float(header['TDMIN6']), float(header['TDMAX6'])] # projected x limits
+    yproj = [float(header['TDMIN7']), float(header['TDMAX7'])] # projected y limits
+    xlims = [float(header['TLMIN6']), float(header['TLMAX6'])] # legal x limits
+    ylims = [float(header['TLMIN7']), float(header['TLMAX7'])] # legal y limits
+
+    # scaling factor
+    sx = 648 / (xlims[1] - xlims[0])
+    sy = 648 / (ylims[1] - ylims[0])
+    
+    
+    # pads (padding)
+    interX = (int((xproj[0] - xlims[0])*sx), int((xlims[1] - xproj[1])*sx))
+    interY = (int((yproj[0] - ylims[0])*sy), int((ylims[1] - yproj[1])*sy))
+    
+    padX = (int(interX[0]/(interX[0] + interX[1])*148), 148-int(interX[0]/(interX[0] + interX[1])*148))
+    padY = (int(interY[0]/(interY[0] + interY[1])*148), 148-int(interY[0]/(interY[0] + interY[1])*148))
+
+    # Transformations
+    ## Rotation
+    dataR = np.flipud(nd.rotate(data, angle, reshape = False))
+    ## Resizing
+    dataT = skimage.transform.resize(dataR, (500, 500), mode='constant', cval=0.0)
     ## Padding
     dataP = np.pad(dataT, (padY, padX), 'constant', constant_values=0) # xy reversed
 

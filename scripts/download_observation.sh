@@ -34,7 +34,7 @@ if [[ "${mode[@]}" =~ "M2" ]] || [[ "${mode[@]}" =~ "MOS" ]] ; then
 fi
 
 # Summary file
-curl -o $path/sas.TAR "http://nxsa.esac.esa.int/nxsa-sl/servlet/data-action-aio?obsno=${obs}&level=ODF&extension=SAS"
-tar -xf $path/sas.TAR -C $path
-rm *ATS.FIT *TCS.FIT *RAS.ASC *ROS.ASC MANIFEST* *.TAR
+#curl -o $path/sas.TAR "http://nxsa.esac.esa.int/nxsa-sl/servlet/data-action-aio?obsno=${obs}&level=ODF&extension=SAS"
+#tar -xf $path/sas.TAR -C $path
+#rm *ATS.FIT *TCS.FIT *RAS.ASC *ROS.ASC MANIFEST* *.TAR
 
