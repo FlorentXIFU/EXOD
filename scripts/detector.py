@@ -201,26 +201,42 @@ def main_fct() :
         with Pool(args.mta) as p:
             v_matrix = p.map(var_calc_partial, data)
 
-        # Applying CCD configuration
+        # Checking data mode acquisition
+        submode = header['SUBMODE']
+        
+        # Applying CCD and Mode configuration
         if args.inst == 'PN' :
             data_v = PN_config(v_matrix)
+            data_v = np.array(data_v)
+            if submode == 'PrimeLargeWindow' :
+                data_vm = data_v[:,100:300]
+            elif submode == 'PrimeSmallWindow' :
+                data_vm = data_v[128:192,200:264]
+            else :
+                data_vm = data_v
+            
         elif args.inst == 'M1' :
             data_v = M1_config(v_matrix)
+            data_vm = np.array(data_v)
+            
         elif args.inst == 'M2' :
             data_v = M2_config(v_matrix)
+            data_vm = np.array(data_v)
         
         # Applying geometrical transformation
         if args.inst == 'PN' :
-            img_v  = data_transformation_PN(data_v, header)
+            img_v  = data_transformation_PN(data_vm, header)
         elif args.inst == 'M1' or 'M2' :
-            img_v  = data_transformation_MOS(data_v, header)
+            img_v  = data_transformation_MOS(data_vm, header)
 
     ###
     # Detecting variable areas and sources
     ###
         
         print(" Detecting variable sources\t {:7.2f} s".format(time.time() - original_time))
-        median = np.median([v_matrix[ccd][i][j] for ccd in range(ccdnb) for i in range(len(v_matrix[ccd])) for j in range(len(v_matrix[ccd][i]))])
+        #median = np.median([v_matrix[ccd][i][j] for ccd in range(ccdnb) for i in range(len(v_matrix[ccd])) for j in range(len(v_matrix[ccd][i]))])
+        v_matrix=np.array(v_matrix)
+        median = np.median(v_matrix)
 
         # Avoiding a too small median value for detection
         print("\n\tMedian\t\t{0}".format(median))
