@@ -17,10 +17,10 @@
 ########################################################################
 
 # Default variables
-CPUS=8
+CPUS=12
 # Default folders
-DIR=/home/monrillo/data
-SCRIPTS=/home/monrillo/EXOD/scripts
+DIR=/home/florent/data
+SCRIPTS=/home/florent/EXOD/scripts
 
 # Input variables
 while [[ $# -gt 0 ]]; do

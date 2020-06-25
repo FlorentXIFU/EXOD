@@ -97,9 +97,9 @@ cd $path
 # Setting SAS tools
 export SAS_ODF=$path
 export SAS_CCF=$path/ccf.cif
-export HEADAS=/home/monrillo/heasoft-6.26.1/x86_64-pc-linux-gnu-libc2.27
+export HEADAS=/usr/local/heasoft-6.22.1/x86_64-unknown-linux-gnu-libc2.19
 . $HEADAS/headas-init.sh
-. /home/monrillo/SAS/xmmsas_20190531_1155/setsas.sh
+. /usr/local/SAS/xmmsas_20170719_1539/setsas.sh
 
 # Summary file
 if [ ! -f $path/*SUM.ASC ]; then 

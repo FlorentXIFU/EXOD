@@ -49,5 +49,5 @@ RATE_FILE_M2         = "M2_rate.fits"
 
 # software installation paths
 
-HEADAS = "/home/monrillo/heasoft-6.26.1/x86_64-pc-linux-gnu-libc2.27"
-SAS    = "/home/monrillo/SAS/xmmsas_20190531_1155/setsas.sh"
+HEADAS = "/usr/local/heasoft-6.22.1/x86_64-unknown-linux-gnu-libc2.19"
+SAS    = "/usr/local/SAS/xmmsas_20170719_1539/setsas.sh"

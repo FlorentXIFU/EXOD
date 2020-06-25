@@ -16,8 +16,8 @@
 
 # Default variables
 RATE=0.5	# according to SAS documentation (PN Rate = 0.4 and MOS Rate = 0.35)
-FOLDER=/home/monrillo/data
-SCRIPTS=/home/monrillo/EXOD/scripts
+FOLDER=/home/florent/data
+SCRIPTS=/home/florent/EXOD/scripts
 INST=PN
 
 # Input variables
