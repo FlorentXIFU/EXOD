@@ -236,7 +236,7 @@ def main_fct() :
         
         print(" Detecting variable sources\t {:7.2f} s".format(time.time() - original_time))
         #median = np.median([v_matrix[ccd][i][j] for ccd in range(ccdnb) for i in range(len(v_matrix[ccd])) for j in range(len(v_matrix[ccd][i]))])
-        v_matrix=np.array(v_matrix)
+        v_matrix = np.array(v_matrix)
         median = np.median(v_matrix)
 
         # Avoiding a too small median value for detection
