@@ -121,7 +121,7 @@ def render_variability(var_file, output_file, sources=True, pars=None, maximum_v
 
 ########################################################################
 
-def render_variability_all(var_file0, var_file1, var_file2, var_file3, output_file, sources=True, pars=None, maximum_value=10) :
+def render_variability_all(var_file0, var_file1, var_file2, var_file3, output_file, sources=True, pars=None, maximum_value=1) :
 
     var_files = [var_file0, var_file1, var_file2, var_file3]
 
