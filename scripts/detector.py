@@ -271,8 +271,8 @@ def main_fct() :
 
         print(" Rendering variability image\t {:7.2f} s".format(time.time() - original_time))
 
-        render_variability(var_f, args.out + FileNames.OUTPUT_IMAGE, sources=False, maximum_value=10)
-        render_variability(var_f, args.out + FileNames.OUTPUT_IMAGE_SRCS, sources=True, maximum_value=10)
+        render_variability(var_f, args.out + FileNames.OUTPUT_IMAGE, sources=False, maximum_value=None)
+        render_variability(var_f, args.out + FileNames.OUTPUT_IMAGE_SRCS, sources=True, maximum_value=None)
 
     # ds9
     if args.ds9 :
