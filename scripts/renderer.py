@@ -72,7 +72,6 @@ def render_variability(var_file, output_file, sources=True, pars=None, maximum_v
     w.wcs.cdelt = [header['REFXCDLT']/15, header['REFYCDLT']]
     w.wcs.crval = [header['REFXCRVL']/15, header['REFYCRVL']]
     w.wcs.ctype = [header['REFXCTYP'], header['REFYCTYP']]
-    angle = header['PA_PNT']       # Degrees
 
     # Image limit
     dlim = [header['REFXLMIN'], header['REFXLMAX'], header['REFYLMIN'], header['REFYLMAX']]
@@ -89,7 +88,7 @@ def render_variability(var_file, output_file, sources=True, pars=None, maximum_v
     # Plotting the variability data
     plt.subplot(111, projection=w)
 
-    im = plt.imshow(data, cmap=cm.inferno, norm=colors.LogNorm(vmin=1.0, vmax=maximum_value), extent=dlim)
+    im = plt.imshow(data, cmap=cm.inferno, norm=colors.LogNorm(vmin=0.1, vmax=maximum_value), extent=dlim)
 
     ax = plt.gca()
     ax.set_facecolor('k')
@@ -115,7 +114,7 @@ def render_variability(var_file, output_file, sources=True, pars=None, maximum_v
 
     # Title
     #if pars != None :
-    plt.title('OBS {0}'.format(header['OBS_ID']), fontsize=14)
+    plt.title('OBS {0}   Inst: {1}'.format(header['OBS_ID'], header['INSTRUME']), fontsize=14)
     plt.text(0.5, 0.95, "TW {0} s    DL {1}   BS {2}".format(header['TW'], header['DL'], header['BS']), color='white', fontsize=10, horizontalalignment='center', transform = ax.transAxes)
 
     plt.savefig(output_file, pad_inches=0, bbox_inches='tight', dpi=500)
@@ -148,7 +147,6 @@ def render_variability_all(var_file0, var_file1, var_file2, var_file3, output_fi
         w.wcs.cdelt = [header['REFXCDLT']/15, header['REFYCDLT']]
         w.wcs.crval = [header['REFXCRVL']/15, header['REFYCRVL']]
         w.wcs.ctype = [header['REFXCTYP'], header['REFYCTYP']]
-        angle = header['PA_PNT']       # Degrees
 
         # Image limit
         dlim = [header['REFXLMIN'], header['REFXLMAX'], header['REFYLMIN'], header['REFYLMAX']]
@@ -156,7 +154,7 @@ def render_variability_all(var_file0, var_file1, var_file2, var_file3, output_fi
         # Plotting the variability data
         plt.subplot(gs1[i], projection=w)
         ax = plt.gca()
-        im = plt.imshow(data/header['DL'], cmap=cm.inferno, norm=colors.LogNorm(vmin=0.1, vmax=1.0), extent=dlim)
+        im = plt.imshow(data/header['DL'], cmap=cm.inferno, norm=colors.LogNorm(vmin=0.1, vmax=maximum_value), extent=dlim)
 
         # Plotting the sources
         if sources :
@@ -188,7 +186,7 @@ def render_variability_all(var_file0, var_file1, var_file2, var_file3, output_fi
     cbar_ax = fig.add_axes([0.8, 0.11, 0.02, 0.77])
     cbar    = fig.colorbar(im, cax=cbar_ax)
     cbar.ax.set_ylabel('$\mathcal{V}$ / DL', fontsize=12)
-    fig.suptitle('OBS {0}'.format(header['OBS_ID']), x=0.5, y = 0.93, fontsize=18)
+    fig.suptitle('OBS {0}   Inst: {1}'.format(header['OBS_ID'], header['INSTRUME']), x=0.45, y = 0.93, fontsize=18)
 
     plt.savefig(output_file, pad_inches=0, dpi=500, bbox_inches='tight')
 

@@ -39,7 +39,7 @@ def variability_computation(gti, time_interval, acceptable_ratio, start_time, en
 	@param  acceptable_ratio:  The acceptability ratio for a TW - good time ratio
 	@param  start_time:  The t0 instant of the observation
 	@param  end_time: The tf instant of the observation
-    	@param  inst:    Type of detector
+    @param  inst:    Type of detector
 	@param  data:    E round, the list of events sorted by their TIME attribute
 	@return: The matrix V_round
 	"""
@@ -266,14 +266,14 @@ def variable_sources_position(variable_areas_matrix, obs, inst, path_out, reg_fi
 
 	# Head text
 	text = """# Region file format: DS9 version 4.0 global
-# XMM-Newton OBSID {0}
-# Instrument {1}
-# EXOD variable sources
-
-global color=green font="times 8 normal roman"
-j2000
-
-""".format(obs, inst)
+    # XMM-Newton OBSID {0}
+    # Instrument {1}
+    # EXOD variable sources
+    
+    global color=green font="times 8 normal roman"
+    j2000
+    
+    """.format(obs, inst)
 
 	for i in range(len(sources)) :
 		# Getting Source class
