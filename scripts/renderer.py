@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.5
+#!/usr/bin/env python3
 # coding=utf-8
 
 ########################################################################
@@ -99,6 +99,7 @@ def render_variability(var_file, output_file, sources=True, pars=None, maximum_v
         if len(src) != 0 :
             # Position of the sources
             plt.plot(src['X'], src['Y'], 'wo', alpha = 1, fillstyle='none')
+            print(src)
 
     ra  = ax.coords[0]
     dec = ax.coords[1]
