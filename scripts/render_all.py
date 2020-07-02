@@ -20,7 +20,7 @@ parser = argparse.ArgumentParser()
 # Path to files
 parser.add_argument("-path", help="Path to the folder containing the observation files", type=str)
 parser.add_argument("-out", help="Name of the output file", default=FileNames.OUTPUT_IMAGE_ALL, type=str)
-parser.add_argument("-inst", "--instrument", dest="inst", help="Type of detector", default='PN', nargs='?', type=str)
+parser.add_argument("-inst", help="Type of detector", default='PN', type=str)
 
 args = parser.parse_args()
 
