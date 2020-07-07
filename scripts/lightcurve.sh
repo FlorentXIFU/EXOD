@@ -58,6 +58,7 @@ if [[ $1 == "-h" ]] || [[ $1 == "--help" ]] ; then
 	@id         : id number of the detected source within the observation\n\
 	@DL         : Detection level used for the variable sources detection\n\
 	@TW         : Time window used for the variable sources detection\n\
+	@GTR        : Good Time Ratio of acceptability for a time window\n\
 	@BS         : Box size in pixels used for the variable sources detection\n\
 	@output_log : full path to the document storing the information of the detection\n\
 	"
@@ -71,9 +72,9 @@ inst="$3"
 id="$4"
 DL="$5"
 TW="$6"
-GTR=1.0
-BS="$7"
-output_log="$8"
+GTR="$7"
+BS="$8"
+output_log="$9"
 
 observation=${path: -10}
 
@@ -193,7 +194,7 @@ echo -e "\n\t$src\n"
 ###
 
 if [ ! -f $nosrc_file ]; then
-evselect table=$clean_file withfilteredset=Y filteredset=$nosrc_file destruct=Y keepfilteroutput=T expression="region($fbk_file:REGION,X,Y)" #-V 0
+evselect table=$clean_file withfilteredset=Y filteredset=$nosrc_file destruct=Y keepfilteroutput=T expression="region($fbk_file:REGION,X,Y)" -V 0
 fi
 
 bgdXY=$(ebkgreg withsrclist=no withcoords=yes imageset=$img_file x=$RAd y=$DEC r=$srcRas coordtype=EQPOS | grep 'X,Y Sky Coord.' | head -1 | awk '{print$5$6}')

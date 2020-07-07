@@ -50,9 +50,6 @@ from renderer import *
 parser = argparse.ArgumentParser()
 
 # Path to files
-#parser.add_argument("-evts", help="Name of the clean observation file", type=str, nargs='?', default=FileNames.CLEAN_FILE_PN)
-#parser.add_argument("-gti", help="Name of the GTI file", type=str, nargs='?', default=FileNames.GTI_FILE_PN)
-#parser.add_argument("-img", help="Name of the image file", type=str, nargs='?', default=FileNames.IMG_FILE_PN)
 parser.add_argument("-path", help="Path to the folder containing the observation files", type=str)
 parser.add_argument("-out", help="Path to the folder where the output files will be stored", default=None, type=str)
 

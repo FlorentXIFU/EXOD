@@ -192,6 +192,76 @@ def render_variability_all(var_file0, var_file1, var_file2, var_file3, output_fi
 
 
 ########################################################################
+    
+def render_variability_exodus(var_file0, var_file1, var_file2, output_file, sources=True, pars=None, maximum_value=0.5) :
+
+    var_files = [var_file0, var_file1, var_file2]
+
+    # Starting loop on the different parameters
+    fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(9.5,8))
+    gs1 = gridspec.GridSpec(1, 3, wspace=0.05)
+
+    for i in range(len(var_files)) :
+
+        hdulist = fits.open(var_files[i])
+
+        data   = hdulist[0].data
+        src    = hdulist[1].data
+        header = hdulist[0].header
+
+        hdulist.close()
+
+        # Obtaining the WCS transformation parameters
+
+        w = wcs.WCS(header)
+
+        w.wcs.crpix = [header['REFXCRPX'], header['REFYCRPX']]
+        w.wcs.cdelt = [header['REFXCDLT']/15, header['REFYCDLT']]
+        w.wcs.crval = [header['REFXCRVL']/15, header['REFYCRVL']]
+        w.wcs.ctype = [header['REFXCTYP'], header['REFYCTYP']]
+
+        # Image limit
+        dlim = [header['REFXLMIN'], header['REFXLMAX'], header['REFYLMIN'], header['REFYLMAX']]
+
+        # Plotting the variability data
+        plt.subplot(gs1[i], projection=w)
+        ax = plt.gca()
+        im = plt.imshow(data/header['DL'], cmap=cm.inferno, norm=colors.LogNorm(vmin=0.1, vmax=maximum_value), extent=dlim)
+
+        # Plotting the sources
+        if sources :
+            if len(src) != 0 :
+                # Position of the sources
+                plt.plot(src['X'], src['Y'], 'wo', alpha = 1, fillstyle='none')
+
+        #plt.text(0.5, 0.92, "Inst {}".format(header['INSTRUME']), color='white', fontsize=10, horizontalalignment='center', transform = ax.transAxes)
+        plt.title('{0}'.format(header['INSTRUME']), fontsize=14)
+
+        ra  = ax.coords[0]
+        dec = ax.coords[1]
+
+        ra.set_axislabel('RA', fontsize=12)
+        if i == 0 :
+            dec.set_axislabel('DEC', fontsize=12)
+        if i > 0  :
+            dec.set_ticklabel_visible(False)
+
+        ra.display_minor_ticks(True)
+        dec.display_minor_ticks(True)
+        ax.tick_params(axis='both', which='both', direction='in', color='w', width=1)
+
+        ax.set_facecolor('k')
+
+    fig.subplots_adjust(right=0.77)
+    cbar_ax = fig.add_axes([0.8, 0.05, 0.02, 0.4])
+    cbar    = fig.colorbar(im, cax=cbar_ax)
+    cbar.ax.set_ylabel('$\mathcal{V}$ / DL', fontsize=12)
+    fig.suptitle('OBS {0}'.format(header['OBS_ID']), x=0.5, y = 0.93, fontsize=18)
+
+    plt.savefig(output_file, pad_inches=0, dpi=500, bbox_inches='tight')
+
+
+########################################################################
 
 def ds9_renderer(var_file, reg_file) :
     """
