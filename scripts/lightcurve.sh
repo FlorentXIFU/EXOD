@@ -14,8 +14,6 @@
 # Kolmogorov-Smirnov probability of constancy for sources detected by
 # Variabilitectron as being variable
 
-# bash /scratch/ines/progs/lightcurve.sh <path_obs> <path_scripts> <id> <DL> <TW> <output_log>
-
 # Style functions
 ################################################################################
 
@@ -58,6 +56,7 @@ if [[ $1 == "-h" ]] || [[ $1 == "--help" ]] ; then
 	@id         : id number of the detected source within the observation\n\
 	@DL         : Detection level used for the variable sources detection\n\
 	@TW         : Time window used for the variable sources detection\n\
+	@GTR        : Good Time Ratio of acceptability for a time window\n\
 	@BS         : Box size in pixels used for the variable sources detection\n\
 	@output_log : full path to the document storing the information of the detection\n\
 	"
@@ -71,10 +70,10 @@ inst="$3"
 id="$4"
 DL="$5"
 TW="$6"
-GTR=1.0
-BS="$7"
-output_log="$8"
-
+GTR="$7"
+BS="$8"
+output_log="$9"
+folder=${path:0:-11}
 observation=${path: -10}
 
 title1 "Lightcurve Obs. $observation Src. $id"
@@ -193,7 +192,7 @@ echo -e "\n\t$src\n"
 ###
 
 if [ ! -f $nosrc_file ]; then
-evselect table=$clean_file withfilteredset=Y filteredset=$nosrc_file destruct=Y keepfilteroutput=T expression="region($fbk_file:REGION,X,Y)" #-V 0
+evselect table=$clean_file withfilteredset=Y filteredset=$nosrc_file destruct=Y keepfilteroutput=T expression="region($fbk_file:REGION,X,Y)" -V 0
 fi
 
 bgdXY=$(ebkgreg withsrclist=no withcoords=yes imageset=$img_file x=$RAd y=$DEC r=$srcRas coordtype=EQPOS | grep 'X,Y Sky Coord.' | head -1 | awk '{print$5$6}')
@@ -246,12 +245,8 @@ P_KS=$(echo $P | sed "s/.*Kolm.-Smir. Prob of constancy //" |  sed "s/ (0 means.
 echo -e "Probabilities of constancy : \n\tP_chisq = $P_chisq\n\tP_KS    = $P_KS"
 
 title3 "lcurve"
-#lcurve nser=2 cfile1="$path_out/${src}_lc_${TW}_src.lc" cfile2="$path_out/${src}_lc_${TW}_bgd.lc" window=$path/PN_gti.wi dtnb=$TW nbint=1000000 tchat=2 outfile="$path_out/${src}_lc_${TW}.flc" plotdev="/XW" plot=yes plotdnum=2 plotfile=$scripts/lcurve.pco
-#if [ -f "$(ls $path_out/pgplot.ps)" ]; then
-#	ps2pdf $path_out/pgplot.ps $path_out/${src}_lc_${TW}_xronos.pdf
-#fi
 
-python3 $SCRIPTS/lcurve.py -path $FOLDER -obs $observation -inst $inst -name $src -tw $TW -mode medium -pcs $P_chisq -pks $P_KS -n $id
+python3 $scripts/lcurve.py -path $folder -obs $observation -inst $inst -name $src -tw $TW -mode medium -pcs $P_chisq -pks $P_KS -n $id
 
 end=`date +%s`
 runtime=$((end-start))
