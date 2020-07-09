@@ -175,7 +175,6 @@ xmax = time[-1]
 ymin = 0
 ymax = np.max(cts + std)
 
-med = np.median(cts)
 max = np.argmax(cts)    # Argument of the max
 min = np.argmin(cts)    # Argument of the min
 med = np.median(cts)
@@ -219,7 +218,7 @@ if "mono" in args.mode :
             ax.axvline(start_gti[i], color='w', lw=3, zorder=2)
             ax.axvline(stop_gti[i], color='w', lw=3, zorder=3)
             #ax.Axes_fill_betweenx([-1,100], start_gti[i], stop_gti[i], )
-if "med" in args.mode :
+elif "medium" in args.mode :
     # Data
     plt.plot(time, cts, "o-", linewidth=0.7, markersize=2, color='k', label="Source",zorder=2)
     plt.fill_between(time, cts - std, cts + std, alpha=0.3, color='c', zorder=2)
@@ -231,7 +230,7 @@ if "med" in args.mode :
         for i in range(len(data_gti)) :
             mpl.rcParams['hatch.linewidth'] = 0.1
             ax.axvspan(start_gti[i], stop_gti[i], facecolor= 'k', alpha=0.2, edgecolor='None', zorder=1)
-elif "colo" in args.mode :
+elif "color" in args.mode :
     # Data
     plt.plot(time, cts, 'o', markersize=2, color=color[0], zorder=6)
     plt.plot(time, cts, "o-", linewidth=0.7, markersize=2, color=color[0], label="Source",zorder=2)

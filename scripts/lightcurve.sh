@@ -75,7 +75,7 @@ TW="$6"
 GTR="$7"
 BS="$8"
 output_log="$9"
-
+folder=${path:0:-11}
 observation=${path: -10}
 
 title1 "Lightcurve Obs. $observation Src. $id"
@@ -144,8 +144,6 @@ RAd=$(echo $data | awk '{print $2}' | sed "s/.$//")
 DEC=$(echo $data | awk '{print $3}' | sed "s/.$//")
 R=$(echo $data | awk '{print $4}' | sed "s/.$//")
 srcR=$(echo "$R * 64" | bc)
-
-# echo "data=$data, ccd=$ccd, RAd=$RAd, DEC=$DEC, R=$R, srcR=$srcR"
 
 srcXY=$(ecoordconv imageset=$img_file coordtype=eqpos x=$RAd y=$DEC | tee /dev/tty|grep 'X: Y:'|sed 's/X: Y: //'|sed 's/ /,/g'|sed 's/,//')
 
@@ -247,12 +245,8 @@ P_KS=$(echo $P | sed "s/.*Kolm.-Smir. Prob of constancy //" |  sed "s/ (0 means.
 echo -e "Probabilities of constancy : \n\tP_chisq = $P_chisq\n\tP_KS    = $P_KS"
 
 title3 "lcurve"
-#lcurve nser=2 cfile1="$path_out/${src}_lc_${TW}_src.lc" cfile2="$path_out/${src}_lc_${TW}_bgd.lc" window=$path/PN_gti.wi dtnb=$TW nbint=1000000 tchat=2 outfile="$path_out/${src}_lc_${TW}.flc" plotdev="/XW" plot=yes plotdnum=2 plotfile=$scripts/lcurve.pco
-#if [ -f "$(ls $path_out/pgplot.ps)" ]; then
-#	ps2pdf $path_out/pgplot.ps $path_out/${src}_lc_${TW}_xronos.pdf
-#fi
 
-python3 $SCRIPTS/lcurve.py -path $FOLDER -obs $observation -inst $inst -name $src -tw $TW -mode medium -pcs $P_chisq -pks $P_KS -n $id
+python3 $scripts/lcurve.py -path $folder -obs $observation -inst $inst -name $src -tw $TW -mode medium -pcs $P_chisq -pks $P_KS -n $id
 
 end=`date +%s`
 runtime=$((end-start))

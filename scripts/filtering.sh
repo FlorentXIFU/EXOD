@@ -128,7 +128,7 @@ elif [ "$INST" == "M1" ] || [ "$INST" == "M2" ]; then
 fi
 
 if [[ $RATE != [0-9]* ]]; then
-    echo "Opening PN_rate.fits" 
+    echo "Opening ${INST}_rate.fits" 
     fv $rate_file &
     read -p "Choose the GTI cut rate : " RATE
 fi
