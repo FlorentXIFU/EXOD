@@ -255,6 +255,7 @@ class Source(object):
         time.sleep(0.5)
         with open(out_file) as f:
             for line in f:
+                print(line)
                 log_f.write(line)
 
         # Reading

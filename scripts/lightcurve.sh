@@ -105,7 +105,7 @@ if [ ! -f $path/*SUM.ASC ]; then
   cp $sums/*$observation*SUM.ASC $path
 fi
 
-sum_file=$(ls $path/*SUM.ASC)
+# sum_file=$(ls $path/*SUM.ASC)
 
 # FBKTSR
 
