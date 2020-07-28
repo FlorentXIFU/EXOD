@@ -12,16 +12,16 @@
 #                                                                      #
 ########################################################################
 
-import sys
-import os
-import time
+#import sys
+#import os
+#import time
 
 # Third-party imports
 import argparse
 
 # Internal imports
 import file_names as FileNames
-from renderer import *
+from renderer import render_variability_exodus
 
 ###
 # Parsing arguments

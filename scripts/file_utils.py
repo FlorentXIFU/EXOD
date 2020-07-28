@@ -230,45 +230,47 @@ class Source(object):
         Calculate sky coordinates with the sas task edet2sky.
         Return x, y, ra, dec
         """
-
-        # Launching SAS commands, writing to output file
-        out_file = path + 'variable_sources.txt'
-        # The out_file will be temporarily written to the output directory, then removed.
-
-        if self.id_src == 0 : s = '>'
-        else :      s = '>>'
-
+                
+        # Launching SAS commands
         command = f"""
         export SAS_ODF={path};
         export SAS_CCF={path}ccf.cif;
         export HEADAS={FileNames.HEADAS};
         . $HEADAS/headas-init.sh;
         . {FileNames.SAS};
-        echo "# Variable source {self.id_src}"; #{s} {out_file};
-        edet2sky datastyle=user inputunit=raw X={self.rawx} Y={self.rawy} ccd={self.ccd} calinfoset={img} -V 0 {s} {out_file}
+        echo "# Variable source {self.id_src}";
+        edet2sky datastyle=user inputunit=raw X={self.rawx} Y={self.rawy} ccd={self.ccd} calinfoset={img} -V 0
         """
 
-        # Running command, writing to file
+        # Running command
         process = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
-        #log_f.write('\n * Source position *\n')
-        log_f.write(" * Variable source {0} * ".format(self.id_src))
-        time.sleep(0.5)
-        with open(out_file) as f:
-            for line in f:
-                log_f.write(line)
+        
+        # Extracting the output
+        try:
+            outs, errs = process.communicate(timeout=15)
+        except TimeoutExpired:
+            process.kill()
+            outs, errs = process.communicate()
 
-        # Reading
-        det2sky = np.array([line.rstrip('\n') for line in open(out_file, 'r')])
+        # Converting output in utf-8
+        textout=outs.decode('utf8')
+        # Splitting for each line
+        txt=textout.split("\n")
+        # Converting in numpy array
+        det2sky = np.array(txt)
+        
+        # Writing the results in log file
+        # Finding the beginning of the text to write in log
+        deb = np.where(det2sky == 'Do not forget to define SAS_CCFPATH, SAS_CCF and SAS_ODF')[0][0] + 2
+        #Writing in log file
+        for line in txt[deb:]:
+            log_f.write(line + "\n")
 
-        for i in range(len(det2sky)) :
-            # Equatorial coordinates
-            self.ra, self.dec = det2sky[np.where(det2sky == '# RA (deg)   DEC (deg)')[0][0] + 1].split()
+        # Equatorial coordinates
+        self.ra, self.dec = det2sky[np.where(det2sky == '# RA (deg)   DEC (deg)')[0][0] + 1].split()
 
-            # Sky pixel coordinates
-            self.x, self.y    = det2sky[np.where(det2sky == '# Sky X        Y pixel')[0][0] + 1].split()
-
-        # Removing temporary output file
-        os.remove(out_file)
+        # Sky pixel coordinates
+        self.x, self.y    = det2sky[np.where(det2sky == '# Sky X        Y pixel')[0][0] + 1].split()
 
 ########################################################################
 

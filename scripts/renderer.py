@@ -113,7 +113,6 @@ def render_variability(var_file, output_file, sources=True, pars=None, maximum_v
     cbar.ax.set_ylabel('Variability', fontsize=10)
 
     # Title
-    #if pars != None :
     plt.title('OBS {0}   Inst: {1}'.format(header['OBS_ID'], header['INSTRUME']), fontsize=14)
     plt.text(0.5, 0.95, "TW {0} s    DL {1}   BS {2}".format(header['TW'], header['DL'], header['BS']), color='white', fontsize=10, horizontalalignment='center', transform = ax.transAxes)
 
@@ -193,13 +192,13 @@ def render_variability_all(var_file0, var_file1, var_file2, var_file3, output_fi
 
 ########################################################################
     
-def render_variability_exodus(var_file0, var_file1, var_file2, output_file, sources=True, pars=None, maximum_value=0.5) :
+def render_variability_exodus(var_file0, var_file1, var_file2, output_file, sources=True, pars=None, maximum_value=None) :
 
     var_files = [var_file0, var_file1, var_file2]
 
     # Starting loop on the different parameters
-    fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(9.5,8))
-    gs1 = gridspec.GridSpec(1, 3, wspace=0.05)
+    fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(9.5,5))
+    gs1 = gridspec.GridSpec(1, 3, wspace=0.15)
 
     for i in range(len(var_files)) :
 
@@ -222,11 +221,18 @@ def render_variability_exodus(var_file0, var_file1, var_file2, output_file, sour
 
         # Image limit
         dlim = [header['REFXLMIN'], header['REFXLMAX'], header['REFYLMIN'], header['REFYLMAX']]
+        
+        # Limite maximale de l'échelle des couleurs pour la normalisation par logarithme
+        if maximum_value == None :
+            maximum_value = max([max(tmp) for tmp in data])
 
         # Plotting the variability data
         plt.subplot(gs1[i], projection=w)
         ax = plt.gca()
-        im = plt.imshow(data/header['DL'], cmap=cm.inferno, norm=colors.LogNorm(vmin=0.1, vmax=maximum_value), extent=dlim)
+        if i == 0:
+            im = plt.imshow(data, cmap=cm.inferno, norm=colors.LogNorm(vmin=0.1, vmax=maximum_value), extent=dlim)
+        else:
+            im = plt.imshow(data*4, cmap=cm.inferno, norm=colors.LogNorm(vmin=0.1, vmax=maximum_value), extent=dlim)
 
         # Plotting the sources
         if sources :
@@ -235,28 +241,29 @@ def render_variability_exodus(var_file0, var_file1, var_file2, output_file, sour
                 plt.plot(src['X'], src['Y'], 'wo', alpha = 1, fillstyle='none')
 
         #plt.text(0.5, 0.92, "Inst {}".format(header['INSTRUME']), color='white', fontsize=10, horizontalalignment='center', transform = ax.transAxes)
+        plt.text(0.5, 0.92, "TW {0} s    DL {1}   BS {2}".format(header['TW'], header['DL'], header['BS']), color='white', fontsize=7, horizontalalignment='center', transform = ax.transAxes)
+        #plt.text(0.5, -0.05, "{0} | {1}".format(src['X'], src['Y']), fontsize=7, horizontalalignment='center')
         plt.title('{0}'.format(header['INSTRUME']), fontsize=14)
 
         ra  = ax.coords[0]
         dec = ax.coords[1]
 
         ra.set_axislabel('RA', fontsize=12)
-        if i == 0 :
-            dec.set_axislabel('DEC', fontsize=12)
-        if i > 0  :
+        dec.set_axislabel('DEC', fontsize=12)
+        
+        if i != 0 :
             dec.set_ticklabel_visible(False)
 
         ra.display_minor_ticks(True)
         dec.display_minor_ticks(True)
-        ax.tick_params(axis='both', which='both', direction='in', color='w', width=1)
-
+        ax.tick_params(axis='both', which='both', direction='in', color='w', width=1, labelsize=8)
         ax.set_facecolor('k')
 
     fig.subplots_adjust(right=0.77)
-    cbar_ax = fig.add_axes([0.8, 0.05, 0.02, 0.4])
+    cbar_ax = fig.add_axes([0.8, 0.27, 0.02, 0.45])
     cbar    = fig.colorbar(im, cax=cbar_ax)
-    cbar.ax.set_ylabel('$\mathcal{V}$ / DL', fontsize=12)
-    fig.suptitle('OBS {0}'.format(header['OBS_ID']), x=0.5, y = 0.93, fontsize=18)
+    cbar.ax.set_ylabel('$\mathcal{V}$', fontsize=12)
+    fig.suptitle('OBS {0}'.format(header['OBS_ID']), x=0.5, y = 0.85, fontsize=18)
 
     plt.savefig(output_file, pad_inches=0, dpi=500, bbox_inches='tight')
 
