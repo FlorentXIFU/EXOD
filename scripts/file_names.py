@@ -25,6 +25,8 @@ OUTPUT_IMAGE      = "variability.pdf"
 OUTPUT_IMAGE_SRCS = "sources.pdf"
 OUTPUT_IMAGE_ALL  = "variability_whole.pdf"
 
+OUTPUT_EXODUS     = "variability_all_inst.pdf"
+
 # Observation files
 #PN
 

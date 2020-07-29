@@ -3,11 +3,12 @@
 
 ########################################################################
 #                                                                      #
-# EXOD - EPIC-pn XMM-Newton Outburst Detector                          #
+# EXOD-v2 - EPIC all instruments XMM-Newton Outburst Detector          #
 #                                                                      #
 # DETECTOR main programme                                              #
 #                                                                      #
 # Inés Pastor Marazuela (2019) - ines.pastor.marazuela@gmail.com       #
+# Florent Castellani    (2020) - castellani.flo@gmail.com              #
 #                                                                      #
 ########################################################################
 """
@@ -79,7 +80,10 @@ args = parser.parse_args()
 if args.path[-1] != '/' :
     args.path = args.path + '/'
 if args.out != None and args.out[-1] != '/' :
-    args.out = args.out + '/'
+    args.out = args.out + '/' + '{}_{}_{}_{}_{}/'.format(int(args.dl), int(args.tw), args.bs, args.gtr, args.inst)
+elif args.out != None and args.out[-1] == '/' :
+    args.out = args.out + '{}_{}_{}_{}_{}/'.format(int(args.dl), int(args.tw), args.bs, args.gtr, args.inst)
+    
 if args.out == None :
     args.out = args.path + '{}_{}_{}_{}_{}/'.format(int(args.dl), int(args.tw), args.bs, args.gtr, args.inst)
 
