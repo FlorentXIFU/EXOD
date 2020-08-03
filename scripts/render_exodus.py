@@ -11,16 +11,21 @@
 # Florent Castellani (2020) - castellani.flo@gmail.com                 #
 #                                                                      #
 ########################################################################
+"""
+Page design and correlation checking for EXODUS program : Variability of
+the 3 EPIC cameras
+"""
 
-#import sys
-#import os
-#import time
+import numpy as np
+from astropy.io import fits
+from astropy.table import Table
 
 # Third-party imports
 import argparse
 
 # Internal imports
 import file_names as FileNames
+from exodus_utils import *
 from renderer import render_variability_exodus
 
 ###
@@ -43,18 +48,86 @@ args = parser.parse_args()
 # Modifying arguments
 if args.path[-1] != '/' :
     args.path = args.path + '/'
-args.out = args.path + args.out
+    
+out = args.path + args.out
 
-# Dd=efining paths to files
+# Defining paths to files
+file0 = args.path + '{}_{}_{}_{}_PN/'.format(int(args.dl), int(args.tw), args.bs, args.gtr) + FileNames.VARIABILITY
+file1 = args.path + '{}_{}_{}_{}_M1/'.format(int(args.dl), int(args.tw), args.bs, args.gtr) + FileNames.VARIABILITY
+file2 = args.path + '{}_{}_{}_{}_M2/'.format(int(args.dl), int(args.tw), args.bs, args.gtr) + FileNames.VARIABILITY
 
-file0 = args.path + '{}_{}_{}_{}_PN/'.format(int(args.dl), int(args.tw), args.bs, args.gtr)   + FileNames.VARIABILITY
-file1 = args.path + '{}_{}_{}_{}_M1/'.format(int(args.dl), int(args.tw), args.bs, args.gtr)   + FileNames.VARIABILITY
-file2 = args.path + '{}_{}_{}_{}_M2/'.format(int(args.dl), int(args.tw), args.bs, args.gtr)   + FileNames.VARIABILITY
+###
+# Computing source lists and correlation for all EPIC instruments
+###
+
+
+# PN source list
+hdulist = fits.open(file0)
+src_PN = Table(hdulist[1].data)
+hdulist.close()
+# MOS 1 source list
+hdulist = fits.open(file1)
+src_M1 = Table(hdulist[1].data)
+hdulist.close()
+# MOS 2 source list
+hdulist = fits.open(file2)
+src_M2 = Table(hdulist[1].data)
+hdulist.close()
+
+# Checking correlation between lists
+
+# Implementing correlation table
+corr_table = Table(names=('ID_1', 'INST_1', 'RA_1', 'DEC_1', 'R_1','ID_2', 'INST_2', 'RA_2', 'DEC_2', 'R_2')\
+                   , dtype=('i2', 'U25', 'f8', 'f8', 'f8','i2', 'U25', 'f8', 'f8', 'f8'))
+
+# Checking correlation for the 3 EPIC
+check_correlation(src_PN, src_M1, corr_table)
+check_correlation(src_M1, src_M2, corr_table)
+check_correlation(src_PN, src_M2, corr_table)
+
+# Checking correlation M1 M2
+#for i in range(len(src_M1)):
+#    for j in range(len(src_M2)):
+#        c1 = SkyCoord(src_M1['RA'][i], src_M1['DEC'][i], frame='fk5', unit='deg')
+#        c2 = SkyCoord(src_M2['RA'][j], src_M2['DEC'][j], frame='fk5', unit='deg')
+#        sep = c1.separation(c2)
+#        
+#        if sep.arcsecond < (src_M1['R'][i]+src_M2['R'][j]):
+#            corr_table.add_row([src_M1['ID'][i], src_M1['INST'][i], src_M1['RA'][i], src_M1['DEC'][i], src_M1['R'][i], src_M2['ID'][j], src_M2['INST'][j], src_M2['RA'][j], src_M2['DEC'][j], src_M2['R'][j]])
+
+
+
+# Sorting the table
+corr_PN_M1 = corr_table[np.where((corr_table['INST_1']=='PN') & (corr_table['INST_2']=='M1'))]
+corr_M1_M2 = corr_table[np.where((corr_table['INST_1']=='M1') & (corr_table['INST_2']=='M2'))]
+corr_PN_M2 = corr_table[np.where((corr_table['INST_1']=='PN') & (corr_table['INST_2']=='M2'))]
+
+# Printing results
+if len(corr_PN_M1) !=0:
+    print("\n Correlation between EPIC-pn and EPIC-MOS1 \n")
+    print(corr_PN_M1)
+
+if len(corr_M1_M2) !=0:
+    print("\n Correlation between EPIC-MOS1 and EPIC-MOS2 \n")
+    print(corr_M1_M2)
+    
+if len(corr_PN_M2) !=0:
+    print("\n Correlation between EPIC-pn and EPIC-MOS2 \n")
+    print(corr_PN_M2)
+
+src_triple = []
+if len(corr_PN_M1) !=0 and len(corr_M1_M2) !=0 and len(corr_PN_M2) !=0:
+    src_triple = check_triple(corr_PN_M1, corr_M1_M2, corr_PN_M2)
+
+if len(src_triple) !=0:
+    print("\n Correlation between the 3 EPIC detectors \n")
+    print(src_triple)
+#sources_all.write(args.path + 'Sources.txt', format='ascii', overwrite=True)
 
 ###
 # Applying renderer
 ###
 
-render_variability_exodus(file0, file1, file2, args.out)
+render_variability_exodus(file0, file1, file2, out, corr_PN_M1, corr_M1_M2, corr_PN_M2, src_triple)
 
-print(args.out)
+print("\n" + out)

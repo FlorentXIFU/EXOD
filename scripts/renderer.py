@@ -28,12 +28,10 @@ import matplotlib
 matplotlib.use("Pdf")
 from matplotlib import colors, image, transforms, gridspec
 import matplotlib.pyplot as plt
-#import matplotlib.gridspec as gridspec
 from pylab import figure, cm
-#from matplotlib.colors import LogNorm
 from astropy import wcs
-#from astropy.wcs import WCS
 from astropy.io import fits
+from astropy.table import Table
 
 
 # Internal imports
@@ -114,7 +112,8 @@ def render_variability(var_file, output_file, sources=True, pars=None, maximum_v
 
     # Title
     plt.title('OBS {0}   Inst: {1}'.format(header['OBS_ID'], header['INSTRUME']), fontsize=14)
-    plt.text(0.5, 0.95, "TW {0} s    DL {1}   BS {2}".format(header['TW'], header['DL'], header['BS']), color='white', fontsize=10, horizontalalignment='center', transform = ax.transAxes)
+    plt.text(0.5, 0.95, "TW {0} s    DL {1}   BS {2}".format(header['TW'], header['DL'], header['BS']),\
+             color='white', fontsize=10, horizontalalignment='center', transform = ax.transAxes)
 
     plt.savefig(output_file, pad_inches=0, bbox_inches='tight', dpi=500)
 
@@ -161,7 +160,8 @@ def render_variability_all(var_file0, var_file1, var_file2, var_file3, output_fi
                 # Position of the sources
                 plt.plot(src['X'], src['Y'], 'wo', alpha = 1, fillstyle='none')
 
-        plt.text(0.5, 0.92, "TW {0} s    DL {1}   BS {2}".format(header['TW'], header['DL'], header['BS']), color='white', fontsize=10, horizontalalignment='center', transform = ax.transAxes)
+        plt.text(0.5, 0.92, "TW {0} s    DL {1}   BS {2}".format(header['TW'], header['DL'], header['BS']),\
+                 color='white', fontsize=10, horizontalalignment='center', transform = ax.transAxes)
 
         ra  = ax.coords[0]
         dec = ax.coords[1]
@@ -192,7 +192,17 @@ def render_variability_all(var_file0, var_file1, var_file2, var_file3, output_fi
 
 ########################################################################
     
-def render_variability_exodus(var_file0, var_file1, var_file2, output_file, sources=True, pars=None, maximum_value=None) :
+def render_variability_exodus(var_file0, var_file1, var_file2, output_file, corr_1, corr_2, corr_3, triple, sources=True, maximum_value=None) :
+    """
+    Function rendering an from the matrix data.
+    @param var_file:    Fits file containing variability and sources data
+    @param sources:     If the detected sources are plotted or not
+    @param output_file: The path to the PDF file to be created
+    @param corr_file:   Table with correlation between instruments
+    @param triple:      List of triple correlation found betwwen the 3 EPIC
+    @param maximum_value: The maximal value for the logarithmic scale
+    """ 
+    
 
     var_files = [var_file0, var_file1, var_file2]
 
@@ -211,7 +221,6 @@ def render_variability_exodus(var_file0, var_file1, var_file2, output_file, sour
         hdulist.close()
 
         # Obtaining the WCS transformation parameters
-
         w = wcs.WCS(header)
 
         w.wcs.crpix = [header['REFXCRPX'], header['REFYCRPX']]
@@ -238,11 +247,32 @@ def render_variability_exodus(var_file0, var_file1, var_file2, output_file, sour
         if sources :
             if len(src) != 0 :
                 # Position of the sources
-                plt.plot(src['X'], src['Y'], 'wo', alpha = 1, fillstyle='none')
+                for s in src:
+                    plt.plot(s['X'], s['Y'], 'wo', alpha = 1, fillstyle='none', ms=s['RAWR'], zorder=1)
+                    
+                    if header['INSTRUME']=='EPN':
+                        if s['ID'] in np.append(np.array(corr_1['ID_1']),np.array(corr_3['ID_1'])):
+                            plt.plot(s['X'], s['Y'], 'bo', alpha = 1, fillstyle='none', ms=s['RAWR'], zorder=2)
+                            for j in range(len(triple)):
+                                if s['ID']==triple[j][0]:
+                                    plt.plot(s['X'], s['Y'], 'go', alpha = 1, fillstyle='none', ms=s['RAWR'], zorder=3)
+                                    
+                    elif header['INSTRUME']=='EMOS1':
+                        if s['ID'] in np.append(np.array(corr_1['ID_2']),np.array(corr_2['ID_1'])):
+                            plt.plot(s['X'], s['Y'], 'bo', alpha = 1, fillstyle='none', ms=s['RAWR'], zorder=2)
+                            for j in range(len(triple)):
+                                if s['ID']==triple[j][2]:
+                                    plt.plot(s['X'], s['Y'], 'go', alpha = 1, fillstyle='none', ms=s['RAWR'], zorder=3)
+                                    
+                    elif header['INSTRUME']=='EMOS2':
+                        if s['ID'] in np.append(np.array(corr_2['ID_2']),np.array(corr_3['ID_2'])):
+                            plt.plot(s['X'], s['Y'], 'bo', alpha = 1, fillstyle='none', ms=s['RAWR'], zorder=2)
+                            for j in range(len(triple)):
+                                if s['ID']==triple[j][4]:
+                                    plt.plot(s['X'], s['Y'], 'go', alpha = 1, fillstyle='none', ms=s['RAWR'], zorder=3)
 
-        #plt.text(0.5, 0.92, "Inst {}".format(header['INSTRUME']), color='white', fontsize=10, horizontalalignment='center', transform = ax.transAxes)
-        plt.text(0.5, 0.92, "TW {0} s    DL {1}   BS {2}".format(header['TW'], header['DL'], header['BS']), color='white', fontsize=7, horizontalalignment='center', transform = ax.transAxes)
-        #plt.text(0.5, -0.05, "{0} | {1}".format(src['X'], src['Y']), fontsize=7, horizontalalignment='center')
+        plt.text(0.5, 0.92, "TW {0} s    DL {1}   BS {2}".format(header['TW'], header['DL'], header['BS']),\
+                 color='white', fontsize=7, horizontalalignment='center', transform = ax.transAxes)
         plt.title('{0}'.format(header['INSTRUME']), fontsize=14)
 
         ra  = ax.coords[0]

@@ -3,7 +3,8 @@
 
 ########################################################################
 #                                                                      #
-# EXOD - EPIC-pn XMM-Newton Outburst Detector                          # #                                                                      #
+# EXOD - EPIC-pn XMM-Newton Outburst Detector                          #
+#                                                                      #
 # Various utilities for both detector and renderer                     #
 #                                                                      #
 # Inés Pastor Marazuela (2019) - ines.pastor.marazuela@gmail.com       #
@@ -107,16 +108,19 @@ def open_files(folder_name) :
 ########################################################################
 
 
-def close_files(log_f, reg_f) :
+def close_files(log_f, var_f, reg_f) :
     """
     Function closing all files.
     """
 
     if log_f :
         log_f.close()
+        
+    #if var_f :
+    #    var_f.close()
 
-    if reg_f :
-        reg_f.close()
+    #if reg_f :
+    #    reg_f.close()
 
 ########################################################################
 
@@ -368,7 +372,7 @@ def data_transformation_PN(data, header) :
     Performing geometrical transformations from raw coordinates to sky coordinates
     @param data: variability matrix
     @param header: header of the clean events file
-    flip@return: transformed variability data
+    @return: transformed variability data
     """
 
     # Header information
@@ -406,7 +410,7 @@ def data_transformation_MOS(data, header) :
     Performing geometrical transformations from raw coordinates to sky coordinates
     @param data: variability matrix
     @param header: header of the clean events file
-    flip@return: transformed variability data
+    @return: transformed variability data
     """
 
     # Header information
@@ -421,18 +425,21 @@ def data_transformation_MOS(data, header) :
     sx = 648 / (xlims[1] - xlims[0])
     sy = 648 / (ylims[1] - ylims[0])
     
-    
     # pads (padding)
     interX = (int((xproj[0] - xlims[0])*sx), int((xlims[1] - xproj[1])*sx))
     interY = (int((yproj[0] - ylims[0])*sy), int((ylims[1] - yproj[1])*sy))
     
-    padX = (int(interX[0]/(interX[0] + interX[1])*148), 148-int(interX[0]/(interX[0] + interX[1])*148))
-    padY = (int(interY[0]/(interY[0] + interY[1])*148), 148-int(interY[0]/(interY[0] + interY[1])*148))
+    # adding pad according to MOS image pix (i.e: 500x500 pix)
+    numX = int((148-(interX[0] + interX[1]))/2)
+    numY = int((148-(interY[0] + interY[1]))/2)
+    
+    padX = (interX[0]+numX, 148-(interX[0]+numX))
+    padY = (interY[0]+numY, 148-(interY[0]+numY))
 
     # Transformations
     ## Rotation
     dataR = np.flipud(nd.rotate(data, angle, reshape = False))
-    ## Resizing
+    ## Resizing (MOS image are based on 500x500 pix)
     dataT = skimage.transform.resize(dataR, (500, 500), mode='constant', cval=0.0)
     ## Padding
     dataP = np.pad(dataT, (padY, padX), 'constant', constant_values=0) # xy reversed

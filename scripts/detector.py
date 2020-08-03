@@ -158,7 +158,7 @@ def main_fct() :
 
         except Exception as e:
             print(" !!!!\nImpossible to extract photons. ABORTING.")
-            close_files(log_f, var_f, var_per_tw_f, detected_var_areas_f, tws_f, detected_var_sources_f)
+            close_files(log_f, var_f, reg_f)
             exit(-2)
 
         # Parameters ready
@@ -180,7 +180,7 @@ def main_fct() :
 
         except Exception as e:
             print(" !!!!\nImpossible to extract gti. ABORTING.")
-            close_files(log_f, var_f, var_per_tw_f, detected_var_areas_f, tws_f, detected_var_sources_f)
+            close_files(log_f, var_f, reg_f)
             exit(-2)
 
         # Computation of initial and final time
@@ -240,7 +240,7 @@ def main_fct() :
         print("\n\tMedian\t\t{0}".format(median))
         if median < 0.75 :
             median = 0.75
-            print(" Median switched to 0.75. \n")
+            print(" \tMedian switched to 0.75. \n")
 
         variable_areas = []
 
