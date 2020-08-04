@@ -221,7 +221,8 @@ def render_variability_exodus(var_file0, var_file1, var_file2, output_file, corr
         hdulist.close()
 
         # Obtaining the WCS transformation parameters
-
+        
+        header.rename_keyword('RADECSYS', 'RADESYS')
         w = wcs.WCS(header)
 
         w.wcs.crpix = [header['REFXCRPX'], header['REFYCRPX']]
@@ -272,10 +273,8 @@ def render_variability_exodus(var_file0, var_file1, var_file2, output_file, corr
                                 if s['ID']==triple[j][4]:
                                     plt.plot(s['X'], s['Y'], 'go', alpha = 1, fillstyle='none', ms=s['RAWR'], zorder=3)
 
-        #plt.text(0.5, 0.92, "Inst {}".format(header['INSTRUME']), color='white', fontsize=10, horizontalalignment='center', transform = ax.transAxes)
         plt.text(0.5, 0.92, "TW {0} s    DL {1}   BS {2}".format(header['TW'], header['DL'], header['BS']),\
                  color='white', fontsize=7, horizontalalignment='center', transform = ax.transAxes)
-        #plt.text(0.5, -0.05, "{0} | {1}".format(src['X'], src['Y']), fontsize=7, horizontalalignment='center')
         plt.title('{0}'.format(header['INSTRUME']), fontsize=14)
 
         ra  = ax.coords[0]
