@@ -89,7 +89,8 @@ clean_file=$path/${inst}_clean.fits
 gti_file=$path/${inst}_gti.fits
 img_file=$path/${inst}_image.fits
 nosrc_file=$path/${inst}_sourceless.fits
-path_out=$path/lcurve_${TW}
+path_out=$path/lcurve_${TW}_${inst}
+
 if [ ! -d $path_out ]; then mkdir $path_out; fi
 cd $path
 

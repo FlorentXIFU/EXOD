@@ -58,13 +58,13 @@ if args.path[-1] == '/' :
 
 # Source and background files
 if args.src == None :
-    lccorr = '{0}/{1}/lcurve_{2}/{3}_lccorr_{2}.lc'.format(args.path, args.obs, args.tw, args.name)
+    lccorr = '{0}/{1}/lcurve_{2}_{4}/{3}_lccorr_{2}.lc'.format(args.path, args.obs, args.tw, args.name, args.inst)
     print(args.name)
     if path.exists(lccorr) :
         args.src = lccorr
     else : 
-        args.src = '{0}/{1}/lcurve_{2}/{3}_lc_{2}_src.lc'.format(args.path, args.obs, args.tw, args.name)
-        args.bgd = '{0}/{1}/lcurve_{2}/{3}_lc_{2}_bgd.lc'.format(args.path, args.obs, args.tw, args.name)
+        args.src = '{0}/{1}/lcurve_{2}_{4}/{3}_lc_{2}_src.lc'.format(args.path, args.obs, args.tw, args.name, args.inst)
+        args.bgd = '{0}/{1}/lcurve_{2}_{4}/{3}_lc_{2}_bgd.lc'.format(args.path, args.obs, args.tw, args.name, args.inst)
         if not path.exists(args.src) :
             print('ERROR: Source File {0} does not exist'.format(args.src))
             sys.exit()
@@ -81,7 +81,7 @@ if args.gti == None :
         
 # Output file
 src = (args.name).replace("_", "+")
-out='{0}/{1}/lcurve_{2}/{3}_lc_{2}.pdf'.format(args.path, args.obs, args.tw, args.name)
+out='{0}/{1}/lcurve_{2}_{4}/{3}_lc_{2}.pdf'.format(args.path, args.obs, args.tw, args.name, args.inst)
 print(out)
 
 ###
