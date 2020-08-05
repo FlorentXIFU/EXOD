@@ -17,7 +17,7 @@ Various functions for EXODUS program
 # Third-party imports
 
 import numpy as np
-from astropy.table import Table
+from astropy.table import Table, Column
 from astropy.coordinates import SkyCoord
 from astropy import units as u
 
@@ -83,45 +83,88 @@ def check_triple(corr_1, corr_2, corr_3) :
     return triple
 
 ########################################################################
+    
+def check_multiple_sources(src) :
+    """
+	Function checking if a source is already included in another one
+    
+	@param  src:   The astropy source table
+
+	@return: The astropy source table without multiple sources
+	"""
+    
+    src.sort(['R'])     # table sorted in radius, from the largest to the shortest
+    src.reverse()       # in order to eliminate sources with shorter radius
+
+    multiple = []
+    for i in range(len(src)):
+        for j in range(i+1,len(src)):
+            c1 = SkyCoord(src['RA'][i], src['DEC'][i], frame='fk5', unit='deg')
+            c2 = SkyCoord(src['RA'][j], src['DEC'][j], frame='fk5', unit='deg')
+            sep = c1.separation(c2)
+            #if sep.arcsecond < (src_M2['R'][i]-(src_M2['R'][j]/2)):
+            if sep.arcsecond < (src['R'][i]):
+                multiple.append(j)
+                
+    src.remove_rows(multiple)   # removing multiple sources
+    src.sort(['ID'])
+    for i in range(len(src)):
+        src['ID'][i]=i+1        # Putting sources in the same order
+    
+    return src
+
+########################################################################
 
 def correl_flag(src, corr_1, corr_2, corr_3, triple_l) :
     """
 	Function creating a column with correlation flag
     
     @param  src: The soure list from FITS record
-	@param  corr_1: The first correlation table
-	@param  corr_2: The second correlation table
-	@param  corr_3: The third correlation table
+	@param  corr_1: The first correlation table  PN_M1
+	@param  corr_2: The second correlation table M1_M2
+	@param  corr_3: The third correlation table  PN_M2
 
 	@return: An astropy Table with correl flag column added
 	"""
-    
+    # Changing in astropy table
     src1 = Table(src)
+    # Adding an empty column
+    A=np.empty((len(src1),), dtype='S25')
+    col_c = Column(name='correl', data=A)
+    src1.add_column(col_c)
+    # Initializing empty
     src1['correl']=''
 
+    # Flagging the correlation column for 3 EPIC
     if src1['INST'][0]=='PN':
         for s in src1:
-            if s['ID'] in np.append(np.array(corr_1['ID_1']),np.array(corr_3['ID_1'])):
-                s['correl']='D'
+            if s['ID'] in corr_1['ID_1']:
+                s['correl']+='M1 '
+            elif s['ID'] in corr_3['ID_1']:
+                s['correl']+='M2 '
             for j in range(len(triple_l)):
                 if s['ID']==triple_l[j][0]:
-                    s['correl']='T'
+                    s['correl']='Triple'
     
     if src1['INST'][0]=='M1':
         for s in src1:
-            if s['ID'] in np.append(np.array(corr_1['ID_2']),np.array(corr_2['ID_1'])):
-                s['correl']='D'
+            if s['ID'] in corr_1['ID_2']:
+                s['correl']+='PN '
+            elif s['ID'] in corr_2['ID_1']:
+                s['correl']+='M2 '
             for j in range(len(triple_l)):
                 if s['ID']==triple_l[j][2]:
-                    s['correl']='T'
+                    s['correl']='Triple'
                     
     if src1['INST'][0]=='M2':
         for s in src1:
-            if s['ID'] in np.append(np.array(corr_2['ID_2']),np.array(corr_3['ID_2'])):
-                s['correl']='D'
+            if s['ID'] in corr_2['ID_2']:
+                s['correl']+='M1 '
+            elif s['ID'] in corr_3['ID_2']:
+                s['correl']+='PN '
             for j in range(len(triple_l)):
                 if s['ID']==triple_l[j][4]:
-                    s['correl']='T'
+                    s['correl']='Triple'
     
     return src1
 

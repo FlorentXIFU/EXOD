@@ -19,11 +19,12 @@ from math import *
 # Third-party imports
 
 import numpy as np
-from numpy import inf
+from astropy.table import Table
 
 # Internal imports
 
 from file_utils import *
+from exodus_utils import check_multiple_sources
 
 ########################################################################
 #                                                                      #
@@ -256,7 +257,7 @@ def variable_sources_position(variable_areas_matrix, obs, inst, path_out, reg_fi
 	        r = round(sqrt( (max([abs(p[0] - center_x) for p in source]))**2 + (max([abs(p[1] - center_y) for p in source]))**2 ), 2)
 
 	        # Avoiding bad pixels
-	        if [inst, ccd, int(center_x)] not in [['PN',4,11], ['PN',4,12], ['PN',4,13], ['PN',5,12], ['PN',10,28]] :
+	        if [inst, ccd+1, int(center_x)] not in [['PN',4,11], ['PN',4,12], ['PN',4,13], ['PN',5,12], ['PN',10,28], ['M1',1,318]]:
 	            cpt_source += 1
 	            sources.append([cpt_source, inst, ccd+1, center_x, center_y, r])
 
@@ -265,7 +266,19 @@ def variable_sources_position(variable_areas_matrix, obs, inst, path_out, reg_fi
 	source_table = Table(names=('ID', 'INST', 'CCDNR', 'RAWX', 'RAWY', 'RAWR', 'X', 'Y', 'SKYR', 'RA', 'DEC', 'R')\
                       , dtype=('i2', 'U25', 'i2', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8'))
 
-	# Head text
+    # Filling the source table
+	for i in range(len(sources)) :
+		# Getting Source class
+		src = Source(sources[i])
+		src.sky_coord(path_out, img_file, log_file)
+		src.r=round(src.r, 3)
+        # Adding source to table
+		source_table.add_row([src.id_src, src.inst, src.ccd, src.rawx, src.rawy, src.rawr, src.x, src.y, src.skyr, src.ra, src.dec, src.r])
+
+    # Removing multiple sources
+	source_table = check_multiple_sources(source_table)
+        
+    # Head text
 	text = """# Region file format: DS9 version 4.0 global
     # XMM-Newton OBSID {0}
     # Instrument {1}
@@ -274,19 +287,13 @@ def variable_sources_position(variable_areas_matrix, obs, inst, path_out, reg_fi
     global color=green font="times 8 normal roman"
     j2000
     
-    """.format(obs, inst)
+    """.format(obs, inst)   
 
-	for i in range(len(sources)) :
-		# Getting Source class
-		src = Source(sources[i])
-		src.sky_coord(path_out, img_file, log_file)
-		src.r=round(src.r, 3)
-        # Adding source to table
-		source_table.add_row([src.id_src, src.inst, src.ccd, src.rawx, src.rawy, src.rawr, src.x, src.y, src.skyr, src.ra, src.dec, src.r])
-		# ds9 text
-		text = text + 'circle {0}, {1}, {2}" # text="{3}"\n'.format(src.ra, src.dec, src.r, src.id_src)
-
-	# Writing region file
+    # ds9 text
+	for s in source_table:
+		text = text + 'circle {0}, {1}, {2}" # text="{3}"\n'.format(s['RA'], s['DEC'], s['R'], s['ID'])
+    
+    # Writing region file
 	reg_f = open(reg_file, 'w')
 	reg_f.write(text)
 	reg_f.close()

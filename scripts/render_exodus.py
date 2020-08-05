@@ -49,7 +49,7 @@ args = parser.parse_args()
 if args.path[-1] != '/' :
     args.path = args.path + '/'
     
-out = args.path + args.out
+out = args.path + 'variability_{}_{}_{}_{}_'.format(int(args.dl), int(args.tw), args.bs, args.gtr) + "all_inst.pdf"
 
 # Defining paths to files
 file0 = args.path + '{}_{}_{}_{}_PN/'.format(int(args.dl), int(args.tw), args.bs, args.gtr) + FileNames.VARIABILITY
@@ -85,18 +85,6 @@ check_correlation(src_PN, src_M1, corr_table)
 check_correlation(src_M1, src_M2, corr_table)
 check_correlation(src_PN, src_M2, corr_table)
 
-# Checking correlation M1 M2
-#for i in range(len(src_M1)):
-#    for j in range(len(src_M2)):
-#        c1 = SkyCoord(src_M1['RA'][i], src_M1['DEC'][i], frame='fk5', unit='deg')
-#        c2 = SkyCoord(src_M2['RA'][j], src_M2['DEC'][j], frame='fk5', unit='deg')
-#        sep = c1.separation(c2)
-#        
-#        if sep.arcsecond < (src_M1['R'][i]+src_M2['R'][j]):
-#            corr_table.add_row([src_M1['ID'][i], src_M1['INST'][i], src_M1['RA'][i], src_M1['DEC'][i], src_M1['R'][i], src_M2['ID'][j], src_M2['INST'][j], src_M2['RA'][j], src_M2['DEC'][j], src_M2['R'][j]])
-
-
-
 # Sorting the table
 corr_PN_M1 = corr_table[np.where((corr_table['INST_1']=='PN') & (corr_table['INST_2']=='M1'))]
 corr_M1_M2 = corr_table[np.where((corr_table['INST_1']=='M1') & (corr_table['INST_2']=='M2'))]
@@ -122,7 +110,17 @@ if len(corr_PN_M1) !=0 and len(corr_M1_M2) !=0 and len(corr_PN_M2) !=0:
 if len(src_triple) !=0:
     print("\n Correlation between the 3 EPIC detectors \n")
     print(src_triple)
-#sources_all.write(args.path + 'Sources.txt', format='ascii', overwrite=True)
+    
+    # Writing triple correlation file for lightcurve exodus
+    triple_f = open(args.path + 'triple_correlation.txt', 'w')
+    text = ''
+    for s in src_triple:
+        text = text + '{0} {1} {2} {3} {4} {5}\n'.format(s[0], s[1], s[2], s[3], s[4], s[5])
+        
+    triple_f.write(text)
+    triple_f.close()
+    
+
 
 ###
 # Applying renderer

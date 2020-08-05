@@ -142,6 +142,37 @@ Title "RENDERING"
 
 python3 -W"ignore" $SCRIPTS/render_exodus.py -path $DIR/$OBS -bs $BS -dl $DL -tw $TW -gtr $GTR
 
+# Lightcurves in case of triple correlations
+
+if [ ! -f $DIR/$OBS/triple_correlation.txt ] ; then	# Exiting if no triple correlation
+    exit
+fi
+
+Title "LIGHTCURVES"
+
+while read line; do
+
+idPN=$(echo $line | awk '{print $1}')
+idM1=$(echo $line | awk '{print $3}')
+idM2=$(echo $line | awk '{print $5}')
+inter=$DIR/$OBS/inter_triple_PN_${idPN}_M1_${idM1}_M2_${idM2}_lc.txt
+
+# Checking whether already done or not
+if [ ! -f $inter ] ; then
+  # PN
+  bash $SCRIPTS/lightcurve.sh $DIR/$OBS $SCRIPTS PN $idPN $DL $TW $GTR $BS $inter
+  # MOS 1
+  bash $SCRIPTS/lightcurve.sh $DIR/$OBS $SCRIPTS M1 $idM1 $DL $TW $GTR $BS $inter
+  # MOS 2 
+  bash $SCRIPTS/lightcurve.sh $DIR/$OBS $SCRIPTS M2 $idM2 $DL $TW $GTR $BS $inter
+fi
+
+#if
+# Plotting and rendering for triple correlation lightcurves
+#python3 -W"ignore" $SCRIPTS/lcurve_exodus.py -path $DIR/$OBS -bs $BS -dl $DL -tw $TW -gtr $GTR
+#fi
+
+done < $DIR/$OBS/triple_correlation.txt
 
 
 

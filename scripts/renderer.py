@@ -254,10 +254,10 @@ def render_variability_exodus(var_file0, var_file1, var_file2, output_file, corr
                     if s['correl']=='':
                         plt.plot(s['X'], s['Y'], 'wo', alpha = 1, fillstyle='none', ms=s['RAWR'], zorder=1)
                                     
-                    elif s['correl']=='D':
+                    elif s['correl']!='' and s['correl']!='Triple':
                         plt.plot(s['X'], s['Y'], 'bo', alpha = 1, fillstyle='none', ms=s['RAWR'], zorder=2)
                                     
-                    elif s['correl']=='T':
+                    elif s['correl']=='Triple':
                         plt.plot(s['X'], s['Y'], 'go', alpha = 1, fillstyle='none', ms=s['RAWR'], zorder=3)
                                     
 
