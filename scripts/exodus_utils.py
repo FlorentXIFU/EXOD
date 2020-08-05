@@ -84,3 +84,45 @@ def check_triple(corr_1, corr_2, corr_3) :
 
 ########################################################################
 
+def correl_flag(src, corr_1, corr_2, corr_3, triple_l) :
+    """
+	Function creating a column with correlation flag
+    
+    @param  src: The soure list from FITS record
+	@param  corr_1: The first correlation table
+	@param  corr_2: The second correlation table
+	@param  corr_3: The third correlation table
+
+	@return: An astropy Table with correl flag column added
+	"""
+    
+    src1 = Table(src)
+    src1['correl']=''
+
+    if src1['INST'][0]=='PN':
+        for s in src1:
+            if s['ID'] in np.append(np.array(corr_1['ID_1']),np.array(corr_3['ID_1'])):
+                s['correl']='D'
+            for j in range(len(triple_l)):
+                if s['ID']==triple_l[j][0]:
+                    s['correl']='T'
+    
+    if src1['INST'][0]=='M1':
+        for s in src1:
+            if s['ID'] in np.append(np.array(corr_1['ID_2']),np.array(corr_2['ID_1'])):
+                s['correl']='D'
+            for j in range(len(triple_l)):
+                if s['ID']==triple_l[j][2]:
+                    s['correl']='T'
+                    
+    if src1['INST'][0]=='M2':
+        for s in src1:
+            if s['ID'] in np.append(np.array(corr_2['ID_2']),np.array(corr_3['ID_2'])):
+                s['correl']='D'
+            for j in range(len(triple_l)):
+                if s['ID']==triple_l[j][4]:
+                    s['correl']='T'
+    
+    return src1
+
+########################################################################

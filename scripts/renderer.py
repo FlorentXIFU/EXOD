@@ -37,6 +37,7 @@ from astropy.table import Table
 # Internal imports
 
 import file_names as FileNames
+from exodus_utils import correl_flag
 from file_utils import *
 
 def render_variability(var_file, output_file, sources=True, pars=None, maximum_value=None) :
@@ -221,6 +222,7 @@ def render_variability_exodus(var_file0, var_file1, var_file2, output_file, corr
         hdulist.close()
 
         # Obtaining the WCS transformation parameters
+        header.rename_keyword('RADECSYS', 'RADESYS')
         w = wcs.WCS(header)
 
         w.wcs.crpix = [header['REFXCRPX'], header['REFYCRPX']]
@@ -246,34 +248,27 @@ def render_variability_exodus(var_file0, var_file1, var_file2, output_file, corr
         # Plotting the sources
         if sources :
             if len(src) != 0 :
+                src_ap = correl_flag(src, corr_1, corr_2, corr_3, triple)
                 # Position of the sources
-                for s in src:
-                    plt.plot(s['X'], s['Y'], 'wo', alpha = 1, fillstyle='none', ms=s['RAWR'], zorder=1)
-                    
-                    if header['INSTRUME']=='EPN':
-                        if s['ID'] in np.append(np.array(corr_1['ID_1']),np.array(corr_3['ID_1'])):
-                            plt.plot(s['X'], s['Y'], 'bo', alpha = 1, fillstyle='none', ms=s['RAWR'], zorder=2)
-                            for j in range(len(triple)):
-                                if s['ID']==triple[j][0]:
-                                    plt.plot(s['X'], s['Y'], 'go', alpha = 1, fillstyle='none', ms=s['RAWR'], zorder=3)
+                for s in src_ap:
+                    if s['correl']=='':
+                        plt.plot(s['X'], s['Y'], 'wo', alpha = 1, fillstyle='none', ms=s['RAWR'], zorder=1)
                                     
-                    elif header['INSTRUME']=='EMOS1':
-                        if s['ID'] in np.append(np.array(corr_1['ID_2']),np.array(corr_2['ID_1'])):
-                            plt.plot(s['X'], s['Y'], 'bo', alpha = 1, fillstyle='none', ms=s['RAWR'], zorder=2)
-                            for j in range(len(triple)):
-                                if s['ID']==triple[j][2]:
-                                    plt.plot(s['X'], s['Y'], 'go', alpha = 1, fillstyle='none', ms=s['RAWR'], zorder=3)
+                    elif s['correl']=='D':
+                        plt.plot(s['X'], s['Y'], 'bo', alpha = 1, fillstyle='none', ms=s['RAWR'], zorder=2)
                                     
-                    elif header['INSTRUME']=='EMOS2':
-                        if s['ID'] in np.append(np.array(corr_2['ID_2']),np.array(corr_3['ID_2'])):
-                            plt.plot(s['X'], s['Y'], 'bo', alpha = 1, fillstyle='none', ms=s['RAWR'], zorder=2)
-                            for j in range(len(triple)):
-                                if s['ID']==triple[j][4]:
-                                    plt.plot(s['X'], s['Y'], 'go', alpha = 1, fillstyle='none', ms=s['RAWR'], zorder=3)
+                    elif s['correl']=='T':
+                        plt.plot(s['X'], s['Y'], 'go', alpha = 1, fillstyle='none', ms=s['RAWR'], zorder=3)
+                                    
 
         plt.text(0.5, 0.92, "TW {0} s    DL {1}   BS {2}".format(header['TW'], header['DL'], header['BS']),\
                  color='white', fontsize=7, horizontalalignment='center', transform = ax.transAxes)
         plt.title('{0}'.format(header['INSTRUME']), fontsize=14)
+        
+        dat=src_ap['ID', 'INST', 'RA', 'DEC', 'R', 'correl']
+        l=0.05*len(dat)
+        src_table = plt.table(cellText=dat, colLabels=dat.colnames, colLoc='center', loc='top', bbox=[0.0,-(0.3+l),0.9,l])
+        src_table.set_fontsize(20)
 
         ra  = ax.coords[0]
         dec = ax.coords[1]

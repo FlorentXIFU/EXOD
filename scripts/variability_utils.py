@@ -280,7 +280,8 @@ def variable_sources_position(variable_areas_matrix, obs, inst, path_out, reg_fi
 		# Getting Source class
 		src = Source(sources[i])
 		src.sky_coord(path_out, img_file, log_file)
-		# Adding source to table
+		src.r=round(src.r, 3)
+        # Adding source to table
 		source_table.add_row([src.id_src, src.inst, src.ccd, src.rawx, src.rawy, src.rawr, src.x, src.y, src.skyr, src.ra, src.dec, src.r])
 		# ds9 text
 		text = text + 'circle {0}, {1}, {2}" # text="{3}"\n'.format(src.ra, src.dec, src.r, src.id_src)
