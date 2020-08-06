@@ -83,8 +83,8 @@ title1 "Lightcurve Obs. $observation Src. $id"
 #sums=/mnt/xmmcat/3XMM_data/SumSas_files_4Webcat
 #fbks=/mnt/data/Ines/data/fbktsr_dr5
 
-sums=$path
-fbks=$path
+
+fbks=/mnt/data/Florent/fbktsr
 clean_file=$path/${inst}_clean.fits
 gti_file=$path/${inst}_gti.fits
 img_file=$path/${inst}_image.fits
@@ -101,19 +101,9 @@ export HEADAS=/usr/local/heasoft-6.22.1/x86_64-unknown-linux-gnu-libc2.19
 . $HEADAS/headas-init.sh
 . /usr/local/SAS/xmmsas_20170719_1539/setsas.sh
 
-# Summary file
-if [ ! -f $path/*SUM.ASC ]; then 
-  cp $sums/*$observation*SUM.ASC $path
-fi
-
-# sum_file=$(ls $path/*SUM.ASC)
-
 # FBKTSR
 
 fbk_file=$(ls $fbks/*$observation*$inst*FBKTSR*)
-
-# cifbuild
-if [ ! -f $path/ccf.cif ]; then cifbuild; fi
 
 ################################################################################
 #                                                                              #
