@@ -81,9 +81,9 @@ corr_table = Table(names=('ID_1', 'INST_1', 'RA_1', 'DEC_1', 'R_1','ID_2', 'INST
                    , dtype=('i2', 'U25', 'f8', 'f8', 'f8','i2', 'U25', 'f8', 'f8', 'f8'))
 
 # Checking correlation for the 3 EPIC
-check_correlation(src_PN, src_M1, corr_table)
-check_correlation(src_M1, src_M2, corr_table)
-check_correlation(src_PN, src_M2, corr_table)
+corr_table=check_correlation(src_PN, src_M1, corr_table)
+corr_table=check_correlation(src_M1, src_M2, corr_table)
+corr_table=check_correlation(src_PN, src_M2, corr_table)
 
 # Sorting the table
 corr_PN_M1 = corr_table[np.where((corr_table['INST_1']=='PN') & (corr_table['INST_2']=='M1'))]
@@ -103,6 +103,7 @@ if len(corr_PN_M2) !=0:
     print("\n Correlation between EPIC-pn and EPIC-MOS2 \n")
     print(corr_PN_M2)
 
+# Checking for triple correlation
 src_triple = []
 if len(corr_PN_M1) !=0 and len(corr_M1_M2) !=0 and len(corr_PN_M2) !=0:
     src_triple = check_triple(corr_PN_M1, corr_M1_M2, corr_PN_M2)
@@ -126,6 +127,6 @@ if len(src_triple) !=0:
 # Applying renderer
 ###
 
-render_variability_exodus(file0, file1, file2, out, corr_PN_M1, corr_M1_M2, corr_PN_M2, src_triple)
+render_variability_exodus(file0, file1, file2, out, corr_table, src_triple)
 
 print("\n" + out)

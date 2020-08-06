@@ -115,14 +115,12 @@ def check_multiple_sources(src) :
 
 ########################################################################
 
-def correl_flag(src, corr_1, corr_2, corr_3, triple_l) :
+def correl_flag(src, corr_table, triple_l) :
     """
 	Function creating a column with correlation flag
     
     @param  src: The soure list from FITS record
-	@param  corr_1: The first correlation table  PN_M1
-	@param  corr_2: The second correlation table M1_M2
-	@param  corr_3: The third correlation table  PN_M2
+	@param  corr_table: The correlation table
 
 	@return: An astropy Table with correl flag column added
 	"""
@@ -134,6 +132,11 @@ def correl_flag(src, corr_1, corr_2, corr_3, triple_l) :
     src1.add_column(col_c)
     # Initializing empty
     src1['correl']=''
+    
+    # Sorting the table
+    corr_1 = corr_table[np.where((corr_table['INST_1']=='PN') & (corr_table['INST_2']=='M1'))]
+    corr_2 = corr_table[np.where((corr_table['INST_1']=='M1') & (corr_table['INST_2']=='M2'))]
+    corr_3 = corr_table[np.where((corr_table['INST_1']=='PN') & (corr_table['INST_2']=='M2'))]
 
     # Flagging the correlation column for 3 EPIC
     if src1['INST'][0]=='PN':

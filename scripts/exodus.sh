@@ -167,10 +167,9 @@ if [ ! -f $inter ] ; then
   bash $SCRIPTS/lightcurve.sh $DIR/$OBS $SCRIPTS M2 $idM2 $DL $TW $GTR $BS $inter
 fi
 
-#if
-# Plotting and rendering for triple correlation lightcurves
-#python3 -W"ignore" $SCRIPTS/lcurve_exodus.py -path $DIR/$OBS -bs $BS -dl $DL -tw $TW -gtr $GTR
-#fi
+# Rendering for triple correlation lightcurves
+
+python3 -W"ignore" $SCRIPTS/lcurve_exodus.py -path $DIR -obs $OBS -file $inter -tw $TW -ipn $idPN -im1 $idM1 -im2 $idM2
 
 done < $DIR/$OBS/triple_correlation.txt
 

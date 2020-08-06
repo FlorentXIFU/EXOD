@@ -193,7 +193,7 @@ def render_variability_all(var_file0, var_file1, var_file2, var_file3, output_fi
 
 ########################################################################
     
-def render_variability_exodus(var_file0, var_file1, var_file2, output_file, corr_1, corr_2, corr_3, triple, sources=True, maximum_value=None) :
+def render_variability_exodus(var_file0, var_file1, var_file2, output_file, corr_file, triple, sources=True, maximum_value=None) :
     """
     Function rendering an from the matrix data.
     @param var_file:    Fits file containing variability and sources data
@@ -248,7 +248,7 @@ def render_variability_exodus(var_file0, var_file1, var_file2, output_file, corr
         # Plotting the sources
         if sources :
             if len(src) != 0 :
-                src_ap = correl_flag(src, corr_1, corr_2, corr_3, triple)
+                src_ap = correl_flag(src, corr_file, triple)
                 # Position of the sources
                 for s in src_ap:
                     if s['correl']=='':
@@ -265,10 +265,11 @@ def render_variability_exodus(var_file0, var_file1, var_file2, output_file, corr
                  color='white', fontsize=7, horizontalalignment='center', transform = ax.transAxes)
         plt.title('{0}'.format(header['INSTRUME']), fontsize=14)
         
-        dat=src_ap['ID', 'INST', 'RA', 'DEC', 'R', 'correl']
-        l=0.05*len(dat)
-        src_table = plt.table(cellText=dat, colLabels=dat.colnames, colLoc='center', loc='top', bbox=[0.0,-(0.3+l),0.9,l])
-        src_table.set_fontsize(20)
+        if len(src) !=0:
+            dat=src_ap['ID', 'INST', 'RA', 'DEC', 'R', 'correl']
+            l=0.1*len(dat)
+            src_table = plt.table(cellText=dat, colLabels=dat.colnames, colLoc='center', loc='top', bbox=[0.0,-(0.3+l),0.9,l])
+            src_table.set_fontsize(20)
 
         ra  = ax.coords[0]
         dec = ax.coords[1]
