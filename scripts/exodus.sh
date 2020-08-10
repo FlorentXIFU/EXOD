@@ -130,11 +130,11 @@ done
 Title "APPLYING DETECTOR"
 
   # PN
-  python3 -W"ignore" $SCRIPTS/detector.py -path $DIR/$OBS -bs $BS -dl $DL -tw $TW -gtr $GTR -mta $CPUS -inst PN --render
+  python3 -W"ignore" $SCRIPTS/detector.py -path $DIR/$OBS -bs $BS -dl $DL -tw $TW -gtr $GTR -mta $CPUS -inst PN --render --novar
   # MOS 1
-  python3 -W"ignore" $SCRIPTS/detector.py -path $DIR/$OBS -bs $BS -dl $DL -tw $TW -gtr $GTR -mta $CPUS -inst M1 --render
+  python3 -W"ignore" $SCRIPTS/detector.py -path $DIR/$OBS -bs $BS -dl $DL -tw $TW -gtr $GTR -mta $CPUS -inst M1 --render --novar
   # MOS 2 
-  python3 -W"ignore" $SCRIPTS/detector.py -path $DIR/$OBS -bs $BS -dl $DL -tw $TW -gtr $GTR -mta $CPUS -inst M2 --render
+  python3 -W"ignore" $SCRIPTS/detector.py -path $DIR/$OBS -bs $BS -dl $DL -tw $TW -gtr $GTR -mta $CPUS -inst M2 --render --novar
 
 # Rendering exodus
 

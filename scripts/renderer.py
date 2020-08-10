@@ -27,6 +27,7 @@ import numpy as np
 import matplotlib
 matplotlib.use("Pdf")
 from matplotlib import colors, image, transforms, gridspec
+from matplotlib.patches import Circle
 import matplotlib.pyplot as plt
 from pylab import figure, cm
 from astropy import wcs
@@ -252,14 +253,16 @@ def render_variability_exodus(var_file0, var_file1, var_file2, output_file, corr
                 # Position of the sources
                 for s in src_ap:
                     if s['correl']=='':
-                        plt.plot(s['X'], s['Y'], 'wo', alpha = 1, fillstyle='none', ms=s['RAWR'], zorder=1)
+                        circ = Circle((s['X'],s['Y']), s['SKYR'],color="none", ec='white')
+                        ax.add_patch(circ)
                                     
                     elif s['correl']!='' and s['correl']!='Triple':
-                        plt.plot(s['X'], s['Y'], 'bo', alpha = 1, fillstyle='none', ms=s['RAWR'], zorder=2)
+                        circ = Circle((s['X'],s['Y']), s['SKYR'],color="none", ec='blue')
+                        ax.add_patch(circ)
                                     
                     elif s['correl']=='Triple':
-                        plt.plot(s['X'], s['Y'], 'go', alpha = 1, fillstyle='none', ms=s['RAWR'], zorder=3)
-                                    
+                        circ = Circle((s['X'],s['Y']), s['SKYR'],color="none", ec='green')
+                        ax.add_patch(circ)
 
         plt.text(0.5, 0.92, "TW {0} s    DL {1}   BS {2}".format(header['TW'], header['DL'], header['BS']),\
                  color='white', fontsize=7, horizontalalignment='center', transform = ax.transAxes)
