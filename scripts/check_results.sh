@@ -14,39 +14,65 @@
 FOLDER=/mnt/data/Florent/results
 output_log=/home/florent/output.log
 
-while read line; do
+cd $FOLDER
+observations=(0*)
+nb_img=${#observations[@]}
+echo $nb_img
+
+for obs in ${observations[@]}; do
 
 # Initialise
 inst=''
 testPN=''
 testM1=''
 testM2=''
+triple=''
 
 # Testing if the variability has been done for each EPIC instrument
-if [ -f $FOLDER/$line/8_100_5_1.0_PN/ds9_variable_sources.reg ] ; then
-    testPN=$(cat $FOLDER/$line/8_100_5_1.0_PN/ds9_variable_sources.reg | grep 'text="'1'"' | awk '{print $1}')
+if [ -f $FOLDER/$obs/8_100_5_1.0_PN/ds9_variable_sources.reg ] ; then
+    testPN=$(cat $FOLDER/$obs/8_100_5_1.0_PN/ds9_variable_sources.reg | grep 'text="'1'"' | awk '{print $1}')
 else
-    inst="$inst  PN(Prob!!!)"
+    inst="$inst\tPN(Pb!)"
 fi
 
-if [ -f $FOLDER/$line/8_100_5_1.0_M1/ds9_variable_sources.reg ] ; then
-    testM1=$(cat $FOLDER/$line/8_100_5_1.0_M1/ds9_variable_sources.reg | grep 'text="'1'"' | awk '{print $1}')
+if [ -f $FOLDER/$obs/8_100_5_1.0_M1/ds9_variable_sources.reg ] ; then
+    testM1=$(cat $FOLDER/$obs/8_100_5_1.0_M1/ds9_variable_sources.reg | grep 'text="'1'"' | awk '{print $1}')
 else
-    inst="$inst  M1(Prob!!!)"
+    inst="$inst\tM1(Pb!)"
 fi
 
-if [ -f $FOLDER/$line/8_100_5_1.0_M2/ds9_variable_sources.reg ] ; then
-    testM2=$(cat $FOLDER/$line/8_100_5_1.0_M2/ds9_variable_sources.reg | grep 'text="'1'"' | awk '{print $1}')
+if [ -f $FOLDER/$obs/8_100_5_1.0_M2/ds9_variable_sources.reg ] ; then
+    testM2=$(cat $FOLDER/$obs/8_100_5_1.0_M2/ds9_variable_sources.reg | grep 'text="'1'"' | awk '{print $1}')
 else
-    inst="$inst  M2(Prob!!!)"
+    inst="$inst\tM2(Pb!)"
 fi
 
 # Testing if at least one variable source has been found for each EPIC instrument
-if [[ "$testPN" == 'circle' ]]; then inst="$inst  PN"; fi
-if [[ "$testM1" == 'circle' ]]; then inst="$inst  M1"; fi
-if [[ "$testM2" == 'circle' ]]; then inst="$inst  M2"; fi
+if [[ "$testPN" == 'circle' ]]; then
+numPN=$(cat $FOLDER/$obs/8_100_5_1.0_PN/ds9_variable_sources.reg | grep 'text=' | awk '{print $1}' | wc -l)
+inst="$inst\tPN=${numPN}"
+fi
+if [[ "$testM1" == 'circle' ]]; then
+numM1=$(cat $FOLDER/$obs/8_100_5_1.0_M1/ds9_variable_sources.reg | grep 'text=' | awk '{print $1}' | wc -l)
+inst="$inst\tM1=${numM1}"
+fi
+if [[ "$testM2" == 'circle' ]]; then
+numM2=$(cat $FOLDER/$obs/8_100_5_1.0_M2/ds9_variable_sources.reg | grep 'text=' | awk '{print $1}' | wc -l)
+inst="$inst\tM2=${numM2}"
+fi
+
+# Testing if triple correlation variability files and lightcurves
+if [ -f $FOLDER/$obs/variability_8_100_5_1.0_all_inst.pdf ] ; then
+triple="$triple\tvar_all_inst"
+fi
+if [ -f $FOLDER/$obs/triple*.pdf ] ; then
+triple="$triple\ttriple_lc"
+fi
+
+# Printing results
+echo -e "$obs $inst $triple"
 
 # Results are written in a log file
-echo -e >> $output_log "$line $inst"
+echo -e >> $output_log "$obs $inst $triple"
 
-done < /home/florent/EXOD/essai.txt
+done 
