@@ -36,6 +36,14 @@ title3(){
   echo -e "\n # $message"
 }
 
+# Useful
+########################################################################
+
+var(){
+  x=$1
+  out=$(cat /home/florent/EXOD/scripts/file_names.py | grep ^$x | awk '{print $3}' | sed 's/"//g')
+  echo $out
+}
 
 ################################################################################
 #                                                                              #
@@ -89,17 +97,20 @@ clean_file=$path/${inst}_clean.fits
 gti_file=$path/${inst}_gti.fits
 img_file=$path/${inst}_image.fits
 nosrc_file=$path/${inst}_sourceless.fits
-path_out=$path/lcurve_${TW}_${inst}
+
+results=/mnt/data/Florent/results/${observation}
+path_out=/mnt/data/Florent/results/${observation}/lcurve_${TW}_${inst}
 
 if [ ! -d $path_out ]; then mkdir $path_out; fi
-cd $path
+
+cd $path_out
 
 # Setting SAS tools
 export SAS_ODF=$path
 export SAS_CCF=$path/ccf.cif
-export HEADAS=/usr/local/heasoft-6.22.1/x86_64-unknown-linux-gnu-libc2.19
+export HEADAS=$(var HEADAS)
 . $HEADAS/headas-init.sh
-. /usr/local/SAS/xmmsas_20170719_1539/setsas.sh
+. $(var SAS)
 
 # FBKTSR
 
@@ -113,8 +124,6 @@ fbk_file=$(ls $fbks/*$observation*$inst*FBKTSR*)
 
 title2 "Preliminaries"
 
-cd $path_out
-
 if [ ! -f $img_file ]; then
   evselect table=$clean_file imagebinning=binSize imageset=$img_file withimageset=yes xcolumn=X ycolumn=Y ximagebinsize=80 yimagebinsize=80 -V 0
 fi
@@ -123,7 +132,7 @@ fi
 # Reading data from the detected_variable_sources file
 ###
 
-data=$(cat $path/${DL}_${TW}_${BS}_${GTR}_${inst}/ds9_variable_sources.reg | grep 'text="'$id'"')
+data=$(cat $results/${DL}_${TW}_${BS}_${GTR}_${inst}/ds9_variable_sources.reg | grep 'text="'$id'"')
 
 ###
 # Defining source position

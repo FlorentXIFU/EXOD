@@ -35,6 +35,7 @@ from astropy.io import fits
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-path", dest="path", help="Path to the observation files", nargs='?', type=str)
+parser.add_argument("-data", help="Path to data files", nargs='?', type=str, default="/mnt/data/Florent/data")
 parser.add_argument("-obs", help="Observation identifier", nargs='?', type=str, default="")
 parser.add_argument("-file", help="File with source names and probabilities", nargs='?', type=str, default="")
 parser.add_argument("-tw", help="Time window", nargs='?', type=int, default=100)
@@ -50,6 +51,8 @@ args = parser.parse_args()
 # Path
 if args.path[-1] == '/' :
     args.path = args.path[:-1]
+if args.data[-1] == '/' :
+    args.data = args.data[:-1]
     
 # Extracting parameters from inter file
 with open(args.file, "r") as f:
@@ -95,9 +98,9 @@ else :
     bgd_M2 = '{0}/{1}/lcurve_{2}_M2/{3}_lc_{2}_bgd.lc'.format(args.path, args.obs, args.tw, name_M2)
 
 # GTI files
-gti_PN = '{0}/{1}/PN_gti.fits'.format(args.path, args.obs)
-gti_M1 = '{0}/{1}/M1_gti.fits'.format(args.path, args.obs)
-gti_M2 = '{0}/{1}/M2_gti.fits'.format(args.path, args.obs)
+gti_PN = '{0}/{1}/PN_gti.fits'.format(args.data, args.obs)
+gti_M1 = '{0}/{1}/M1_gti.fits'.format(args.data, args.obs)
+gti_M2 = '{0}/{1}/M2_gti.fits'.format(args.data, args.obs)
 
 # Name of sources
 name_PN=name_PN.replace("_", "+")

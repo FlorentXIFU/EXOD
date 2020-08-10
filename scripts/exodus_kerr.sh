@@ -17,7 +17,7 @@
 ########################################################################
 
 # Default variables
-DL=8 ; TW=100 ; GTR=1.0 ; BS=5 ; CPUS=12
+DL=8 ; TW=100 ; GTR=1.0 ; BS=5 ; CPUS=24
 F=false
 
 # Default folders
@@ -133,11 +133,13 @@ Title "RENDERING"
 
 python3 -W"ignore" $SCRIPTS/render_exodus.py -path $RESULTS/$OBS -bs $BS -dl $DL -tw $TW -gtr $GTR
 
-waitForFinish 'python'
+#waitForFinish 'python'
 
 # Lightcurves in case of triple correlations
 
-if [ -f $RESULTS/$OBS/triple_correlation.txt ] ; then	# Exiting if no triple correlation
+if [ ! -f $RESULTS/$OBS/triple_correlation.txt ] ; then	# Exiting if no triple correlation
+   exit
+fi
 
 Title "LIGHTCURVES"
 
@@ -151,18 +153,17 @@ inter=$RESULTS/$OBS/inter_triple_PN_${idPN}_M1_${idM1}_M2_${idM2}_lc.txt
 # Checking whether already done or not
 if [ ! -f $inter ] ; then
   # PN
-  bash $SCRIPTS/lightcurve.sh $RESULTS/$OBS $SCRIPTS PN $idPN $DL $TW $GTR $BS $inter
+  bash $SCRIPTS/lightcurve.sh $DIR/$OBS $SCRIPTS PN $idPN $DL $TW $GTR $BS $inter
   # MOS 1
-  bash $SCRIPTS/lightcurve.sh $RESULTS/$OBS $SCRIPTS M1 $idM1 $DL $TW $GTR $BS $inter
+  bash $SCRIPTS/lightcurve.sh $DIR/$OBS $SCRIPTS M1 $idM1 $DL $TW $GTR $BS $inter
   # MOS 2 
-  bash $SCRIPTS/lightcurve.sh $RESULTS/$OBS $SCRIPTS M2 $idM2 $DL $TW $GTR $BS $inter
+  bash $SCRIPTS/lightcurve.sh $DIR/$OBS $SCRIPTS M2 $idM2 $DL $TW $GTR $BS $inter
 fi
 
 # Rendering for triple correlation lightcurves
 
-python3 -W"ignore" $SCRIPTS/lcurve_exodus.py -path $RESULTS -obs $OBS -file $inter -tw $TW -ipn $idPN -im1 $idM1 -im2 $idM2
+python3 -W"ignore" $SCRIPTS/lcurve_exodus.py -path $RESULTS -obs $OBS -data $DIR -file $inter -tw $TW -ipn $idPN -im1 $idM1 -im2 $idM2
 
 done < $RESULTS/$OBS/triple_correlation.txt
 
-fi
 
