@@ -27,6 +27,7 @@ import numpy as np
 import matplotlib
 matplotlib.use("Pdf")
 from matplotlib import colors, image, transforms, gridspec
+from matplotlib.patches import Circle
 import matplotlib.pyplot as plt
 from pylab import figure, cm
 from astropy import wcs
@@ -68,8 +69,8 @@ def render_variability(var_file, output_file, sources=True, pars=None, maximum_v
     w = wcs.WCS(header)
 
     w.wcs.crpix = [header['REFXCRPX'], header['REFYCRPX']]
-    w.wcs.cdelt = [header['REFXCDLT']/15, header['REFYCDLT']]
-    w.wcs.crval = [header['REFXCRVL']/15, header['REFYCRVL']]
+    w.wcs.cdelt = [header['REFXCDLT'], header['REFYCDLT']]
+    w.wcs.crval = [header['REFXCRVL'], header['REFYCRVL']]
     w.wcs.ctype = [header['REFXCTYP'], header['REFYCTYP']]
 
     # Image limit
@@ -144,8 +145,8 @@ def render_variability_all(var_file0, var_file1, var_file2, var_file3, output_fi
         w = wcs.WCS(header)
 
         w.wcs.crpix = [header['REFXCRPX'], header['REFYCRPX']]
-        w.wcs.cdelt = [header['REFXCDLT']/15, header['REFYCDLT']]
-        w.wcs.crval = [header['REFXCRVL']/15, header['REFYCRVL']]
+        w.wcs.cdelt = [header['REFXCDLT'], header['REFYCDLT']]
+        w.wcs.crval = [header['REFXCRVL'], header['REFYCRVL']]
         w.wcs.ctype = [header['REFXCTYP'], header['REFYCTYP']]
 
         # Image limit
@@ -227,8 +228,8 @@ def render_variability_exodus(var_file0, var_file1, var_file2, output_file, corr
         w = wcs.WCS(header)
 
         w.wcs.crpix = [header['REFXCRPX'], header['REFYCRPX']]
-        w.wcs.cdelt = [header['REFXCDLT']/15, header['REFYCDLT']]
-        w.wcs.crval = [header['REFXCRVL']/15, header['REFYCRVL']]
+        w.wcs.cdelt = [header['REFXCDLT'], header['REFYCDLT']]
+        w.wcs.crval = [header['REFXCRVL'], header['REFYCRVL']]
         w.wcs.ctype = [header['REFXCTYP'], header['REFYCTYP']]
 
         # Image limit
@@ -253,19 +254,24 @@ def render_variability_exodus(var_file0, var_file1, var_file2, output_file, corr
                 # Position of the sources
                 for s in src_ap:
                     if s['correl']=='':
-                        plt.plot(s['X'], s['Y'], 'wo', alpha = 1, fillstyle='none', ms=s['RAWR'], zorder=1)
+                        circ = Circle((s['X'],s['Y']), s['SKYR'],color="none", ec='white')
+                        ax.add_patch(circ)
                                     
                     elif s['correl']!='' and s['correl']!='Triple':
-                        plt.plot(s['X'], s['Y'], 'bo', alpha = 1, fillstyle='none', ms=s['RAWR'], zorder=2)
+                        circ = Circle((s['X'],s['Y']), s['SKYR'],color="none", ec='blue')
+                        ax.add_patch(circ)
                                     
                     elif s['correl']=='Triple':
-                        plt.plot(s['X'], s['Y'], 'go', alpha = 1, fillstyle='none', ms=s['RAWR'], zorder=3)
+                        circ = Circle((s['X'],s['Y']), s['SKYR'],color="none", ec='green')
+                        ax.add_patch(circ)
                                     
 
+        # Plotting info and title
         plt.text(0.5, 0.92, "TW {0} s    DL {1}   BS {2}".format(header['TW'], header['DL'], header['BS']),\
                  color='white', fontsize=7, horizontalalignment='center', transform = ax.transAxes)
         plt.title('{0}'.format(header['INSTRUME']), fontsize=14)
         
+        # Plotting the table of all sources with correlation flag
         if len(src) !=0:
             dat=src_ap['ID', 'INST', 'RA', 'DEC', 'R', 'correl']
             l=0.05*len(dat)

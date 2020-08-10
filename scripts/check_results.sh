@@ -12,7 +12,7 @@
 
 
 FOLDER=/mnt/data/Florent/results
-output_log=/home/florent/output.log
+output_log=/home/florent/results.log
 
 cd $FOLDER
 observations=(0*)
@@ -75,4 +75,6 @@ echo -e "$obs $inst $triple"
 # Results are written in a log file
 echo -e >> $output_log "$obs $inst $triple"
 
-done 
+done
+
+
