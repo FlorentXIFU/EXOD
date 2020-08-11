@@ -18,7 +18,8 @@
 # Default variables
 RATE=0
 FOLDER=/mnt/data/Florent/data
-FOLDER_EVTS=/mnt/xmmcat/4xmm_products
+#FOLDER_EVTS=/mnt/xmmcat/4xmm_products
+FOLDER_EVTS=/mnt/xmmcat/4XMM_data/DR10_incr_data
 SCRIPTS=/home/florent/EXOD/scripts
 INST=PN
 
