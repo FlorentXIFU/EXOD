@@ -11,7 +11,7 @@
 ################################################################################
 
 
-FOLDER=/mnt/data/Florent/results
+FOLDER=/mnt/data/Florent/data
 SCRIPTS=/home/florent/EXOD/scripts
 input_log=/home/florent/results.log
 output_log=/home/florent/lightcurve_results.log
