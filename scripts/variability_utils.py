@@ -122,6 +122,7 @@ def variability_computation(gti, time_interval, acceptable_ratio, start_time, en
 				med = np.median(counted_events[i][j])
 				if med != 0 :
 					V_mat[i][j] = np.amax([(max - med),np.absolute(min - med)])/med
+                    #V_mat[i][j] = np.amax([(max - med),np.absolute(min - med)])/med
 				else :
 					V_mat[i][j] = max
 

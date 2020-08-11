@@ -129,12 +129,15 @@ done
 
 Title "APPLYING DETECTOR"
 
-  # PN
-  python3 -W"ignore" $SCRIPTS/detector.py -path $DIR/$OBS -bs $BS -dl $DL -tw $TW -gtr $GTR -mta $CPUS -inst PN --render --novar
-  # MOS 1
-  python3 -W"ignore" $SCRIPTS/detector.py -path $DIR/$OBS -bs $BS -dl $DL -tw $TW -gtr $GTR -mta $CPUS -inst M1 --render --novar
-  # MOS 2 
-  python3 -W"ignore" $SCRIPTS/detector.py -path $DIR/$OBS -bs $BS -dl $DL -tw $TW -gtr $GTR -mta $CPUS -inst M2 --render --novar
+for inst in 'PN' 'M1' 'M2' ; do
+   if [ -f $DIR/$OBS/${DL}_${TW}_${BS}_${GTR}_${inst}/variability_file.fits ] && [ $F = false ]; then
+     nv="--novar"
+     else nv=""
+   fi
+
+  python3 -W"ignore" $SCRIPTS/detector.py -path $DIR/$OBS -bs $BS -dl $DL -tw $TW -gtr $GTR -mta $CPUS -inst $inst --render $nv
+
+done
 
 # Rendering exodus
 
