@@ -31,9 +31,10 @@ from matplotlib.patches import Circle
 import matplotlib.pyplot as plt
 from pylab import figure, cm
 from astropy import wcs
+from astropy import units as u
 from astropy.io import fits
-from astropy.table import Table
-
+from astropy.table import Table, Column
+from astropy.coordinates import SkyCoord
 
 # Internal imports
 
@@ -273,10 +274,17 @@ def render_variability_exodus(var_file0, var_file1, var_file2, output_file, corr
         
         # Plotting the table of all sources with correlation flag
         if len(src) !=0:
-            dat=src_ap['ID', 'INST', 'RA', 'DEC', 'R', 'correl']
-            l=0.05*len(dat)
-            src_table = plt.table(cellText=dat, colLabels=dat.colnames, colLoc='center', loc='top', bbox=[0.0,-(0.3+l),0.9,l])
-            src_table.set_fontsize(20)
+            c = SkyCoord(src_ap['RA'],src_ap['DEC'], frame='fk5', unit='deg')
+            dat=src_ap['ID', 'INST', 'R', 'correl']
+            rahmsstr = Column(name='RA', data=c.ra.to_string(u.hour, sep=':', precision=0))
+            decdmsstr = Column(name='DEC', data=c.dec.to_string(u.degree, alwayssign=True, sep=':', precision=0))
+            dat.add_columns([rahmsstr,decdmsstr],indexes=[2,2])
+            l=0.08*len(dat)
+            src_table = plt.table(cellText=dat, colLabels=dat.colnames, colLoc='center',\
+                          loc='top', cellLoc='left', bbox=[0.0,-(0.3+l),1,l])
+            src_table.auto_set_column_width(col=list(range(len(dat.colnames))))
+            src_table.auto_set_font_size(False)
+            src_table.set_fontsize(5)
 
         ra  = ax.coords[0]
         dec = ax.coords[1]

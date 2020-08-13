@@ -103,6 +103,8 @@ waitForFinish()
 #                                                                      #
 ########################################################################
 
+if [ ! -d $DIR/$OBS ]; then mkdir $DIR/$OBS; fi
+
 cd $DIR/$OBS
 
 # Filtering events

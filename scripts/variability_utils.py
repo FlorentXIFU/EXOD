@@ -276,7 +276,7 @@ def variable_sources_position(variable_areas_matrix, obs, inst, path_out, reg_fi
 		source_table.add_row([src.id_src, src.inst, src.ccd, src.rawx, src.rawy, src.rawr, src.x, src.y, src.skyr, src.ra, src.dec, src.r])
 
     # Removing multiple sources
-	source_table = check_multiple_sources(source_table)
+	source_table1 = check_multiple_sources(source_table)
         
     # Head text
 	text = """# Region file format: DS9 version 4.0 global
@@ -290,7 +290,7 @@ def variable_sources_position(variable_areas_matrix, obs, inst, path_out, reg_fi
     """.format(obs, inst)   
 
     # ds9 text
-	for s in source_table:
+	for s in source_table1:
 		text = text + 'circle {0}, {1}, {2}" # text="{3}"\n'.format(s['RA'], s['DEC'], s['R'], s['ID'])
     
     # Writing region file
@@ -298,4 +298,4 @@ def variable_sources_position(variable_areas_matrix, obs, inst, path_out, reg_fi
 	reg_f.write(text)
 	reg_f.close()
 
-	return source_table
+	return source_table1

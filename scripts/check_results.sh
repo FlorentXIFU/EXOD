@@ -10,7 +10,7 @@
 #                                                                              #
 ################################################################################
 
-
+DATA=/mnt/data/Florent/data
 FOLDER=/mnt/data/Florent/results
 output_log=/home/florent/results.log
 
@@ -27,6 +27,26 @@ testPN=''
 testM1=''
 testM2=''
 triple=''
+submode=''
+
+# Testing submode
+if [ -f $DATA/$obs/PN_clean.fits ] ; then
+  modePN=$(hexdump -e '80/1 "%_p" "\n"' $DATA/$obs/PN_clean.fits | grep -m 1 SUBMODE | awk '{print $3}' | tr -d '[a-z]')
+else
+  modePN='NoPNdata'
+fi
+if [ -f $DATA/$obs/M1_clean.fits ] ; then
+  modeM1=$(hexdump -e '80/1 "%_p" "\n"' $DATA/$obs/M1_clean.fits | grep -m 1 SUBMODE | awk '{print $3}' | tr -d '[a-z]')
+else
+  modeM1='NoM1data'
+fi
+if [ -f $DATA/$obs/M2_clean.fits ] ; then
+  modeM2=$(hexdump -e '80/1 "%_p" "\n"' $DATA/$obs/M2_clean.fits | grep -m 1 SUBMODE | awk '{print $3}' | tr -d '[a-z]')
+else
+  modeM2='NoM2data'
+fi
+
+submode="$submode\t$modePN\t$modeM1\t$modeM2"
 
 # Testing if the variability has been done for each EPIC instrument
 if [ -f $FOLDER/$obs/8_100_5_1.0_PN/ds9_variable_sources.reg ] ; then
@@ -70,10 +90,10 @@ triple="$triple\ttriple_lc"
 fi
 
 # Printing results
-echo -e "$obs $inst $triple"
+echo -e "$obs $submode $inst $triple"
 
 # Results are written in a log file
-echo -e >> $output_log "$obs $inst $triple"
+echo -e >> $output_log "$obs $submode $inst $triple"
 
 done
 
