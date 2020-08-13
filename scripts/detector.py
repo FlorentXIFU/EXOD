@@ -238,9 +238,9 @@ def main_fct() :
 
         # Avoiding a too small median value for detection
         print("\n\tMedian\t\t{0}".format(median))
-        #if median < 0.75 :
-        #    median = 0.75
-        #    print(" \tMedian switched to 0.75. \n")
+        if median < 0.75 :
+            median = 0.75
+            print(" \tMedian switched to 0.75. \n")
 
         variable_areas = []
 
