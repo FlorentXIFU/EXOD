@@ -92,7 +92,7 @@ title1 "Lightcurve Obs. $observation Src. $id"
 #fbks=/mnt/data/Ines/data/fbktsr_dr5
 
 
-fbks=/mnt/data/Florent/fbktsr
+fbks=/mnt/data/Florent/fbktsr/${observation}
 clean_file=$path/${inst}_clean.fits
 gti_file=$path/${inst}_gti.fits
 img_file=$path/${inst}_image.fits
@@ -246,7 +246,7 @@ echo -e "Probabilities of constancy : \n\tP_chisq = $P_chisq\n\tP_KS    = $P_KS"
 
 title3 "lcurve"
 
-python3 -W"ignore" $scripts/lcurve.py -path $folder -obs $observation -inst $inst -name $src -tw $TW -mode medium -pcs $P_chisq -pks $P_KS -n $id
+python3 -W"ignore" $scripts/lcurve.py -path /mnt/data/Florent/results -obs $observation -inst $inst -name $src -tw $TW -mode medium -pcs $P_chisq -pks $P_KS -n $id
 
 end=`date +%s`
 runtime=$((end-start))

@@ -35,6 +35,7 @@ from astropy.io import fits
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-path", dest="path", help="Path to the observation files", nargs='?', type=str)
+parser.add_argument("-data", help="Path to data files", nargs='?', type=str, default="/mnt/data/Florent/data")
 parser.add_argument("-name", dest="name", help="Source name", nargs='?', type=str)
 parser.add_argument("-obs", help="Observation identifier", nargs='?', type=str, default="")
 parser.add_argument("-inst", help="Type of detector", nargs='?', type=str, default="PN")
@@ -74,7 +75,7 @@ if args.src == None :
         
 # GTI file
 if args.gti == None :
-    args.gti = '{0}/{1}/{2}_gti.fits'.format(args.path, args.obs, args.inst)
+    args.gti = '{0}/{1}/{2}_gti.fits'.format(args.data, args.obs, args.inst)
     if not path.exists(args.gti) :
         print('ERROR: File {0} does not exist'.format(args.gti))
         sys.exit()
