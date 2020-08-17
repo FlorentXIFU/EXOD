@@ -101,12 +101,17 @@ nosrc_file=$path/${inst}_sourceless.fits
 results=/mnt/data/Florent/results/${observation}
 path_out=/mnt/data/Florent/results/${observation}/lcurve_${TW}_${inst}
 
+#Only for DR10
+path_odf=/mnt/xmmcat/4XMM_data/DR10_incr_data/${observation}/odf
+
 if [ ! -d $path_out ]; then mkdir $path_out; fi
 
 cd $path_out
 
 # Setting SAS tools
-export SAS_ODF=$path
+
+#export SAS_ODF=$path
+export SAS_ODF=$path_odf
 export SAS_CCF=$path/ccf.cif
 export HEADAS=$(var HEADAS)
 . $HEADAS/headas-init.sh

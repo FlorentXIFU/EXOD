@@ -13,11 +13,13 @@
 DATA=/mnt/data/Florent/data
 FOLDER=/mnt/data/Florent/results
 output_log=/home/florent/results.log
+output_file=/home/florent/triple_lightcurves.pdf
 
 cd $FOLDER
 observations=(0*)
 nb_img=${#observations[@]}
 echo $nb_img
+files=()
 
 for obs in ${observations[@]}; do
 
@@ -28,6 +30,7 @@ testM1=''
 testM2=''
 triple=''
 submode=''
+numtrip=0
 
 # Testing submode
 if [ -f $DATA/$obs/PN_clean.fits ] ; then
@@ -85,8 +88,15 @@ fi
 if [ -f $FOLDER/$obs/variability_8_100_5_1.0_all_inst.pdf ] ; then
 triple="$triple\tvar_all_inst"
 fi
-if [ -f $FOLDER/$obs/triple*.pdf ] ; then
+
+if [ -f $FOLDER/$obs/triple_correlation.txt ] ; then
 triple="$triple\ttriple_lc"
+
+# Adding files to big PDF only if lightcurves have been extracted
+numtrip=$(ls -l $FOLDER/$obs/triple*.pdf | wc -l)
+if [ $numtrip -gt 0 ] ; then
+files+=($FOLDER/$obs/triple*.pdf)
+fi
 fi
 
 # Printing results
@@ -96,5 +106,18 @@ echo -e "$obs $submode $inst $triple"
 echo -e >> $output_log "$obs $submode $inst $triple"
 
 done
+
+# Creation of big PDF with all triple correlation lightcurves
+
+#echo ${files[@]}
+
+gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -sOutputFile=$output_file ${files[@]}
+
+echo -e "Triple correlation file : $output_file"
+
+
+
+
+
 
 
