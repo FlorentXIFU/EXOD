@@ -17,10 +17,18 @@ SCRIPTS=/home/florent/EXOD/scripts
 input_log=/home/florent/results.log
 output_log=/home/florent/lightcurve_results.log
 
+cd $RESULTS
+observations=(0*)
+nb_img=${#observations[@]}
+echo $nb_img
+
 while read line ; do
 
 # Extracting observation number
 OBS=$(echo $line | awk '{print $1}')
+
+for obsdr in ${observations[@]}; do
+if [ $obsdr == $OBS ] ; then
 
 # Extracting science mode for each detector
 modePN=$(echo $line | awk '{print $2}' | sed 's/.$//' | sed 's/^.//')
@@ -72,8 +80,10 @@ done
 fi
 #fi
 
+fi
+done
+
 echo -e "Lighcurves done for $OBS with M2 instrument"
 
 done < $input_log
-
 
