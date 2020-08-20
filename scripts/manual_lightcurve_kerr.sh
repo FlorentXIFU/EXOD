@@ -17,7 +17,7 @@
 ################################################################################
 
 # Default variables
-DL=24 ; TW=100 ; GTR=1.0 ; BS=5; INST=PN; ID=1
+DL=8 ; TW=100 ; GTR=1.0 ; BS=5; ID=1
 # Default folders
 FOLDER=/mnt/data/Florent/data
 SCRIPTS=/home/florent/EXOD/scripts
@@ -36,7 +36,9 @@ case "$1" in
   shift; shift ;;
   -bs|--box-size)         BS=${2:-$BS}
   shift; shift ;;
-  -i|--inst)              INST=${2:-$INST}
+  -ii|--instrument-in)    INSTIN=${2}
+  shift; shift ;;
+  -io|--instrument-out)   INSTOUT=${2}
   shift; shift ;;
   -id|--source-id)        ID=${2:-$ID}
   shift; shift ;;
@@ -48,7 +50,6 @@ case "$1" in
 esac
 done
 
-output_log=/mnt/data/Florent/results/$OBS/excluded_manual/output.log
 path=$FOLDER/$OBS
 
 ###
@@ -81,31 +82,42 @@ input(){
 
 start=`date +%s`
 
-title1 "Lightcurve Obs. $OBS Src. $ID"
+title1 "Lightcurve Obs. $OBS Inst_input. $INSTIN Src. $ID"
 
 echo -e "\tFOLDER          = ${FOLDER}"
 echo -e "\tSCRIPTS         = ${SCRIPTS}"
-echo -e "\tOUTPUT LOG      = ${output_log}\n"
 echo -e "\tDETECTION LEVEL = ${DL}"
 echo -e "\tTIME WINDOW     = ${TW}"
 echo -e "\tGOOD TIME RATIO = ${GTR}" 
 echo -e "\tBOX SIZE        = ${BS}"
-echo -e "\tINSTRUMENT      = ${INST}"
+echo -e "\tINST INPUT      = ${INSTIN}"
+echo -e "\tINST OUTPUT     = ${INSTOUT}"
 
 # Selecting the files and paths
-fbks=/mnt/data/Florent/fbktsr/${OBS}
-clean_file=$path/${inst}_clean.fits
-gti_file=$path/${inst}_gti.fits
-img_file=$path/${inst}_image.fits
-nosrc_file=$path/${inst}_sourceless.fits
 
-results=/mnt/data/Florent/results/${OBS}
-path_out=/mnt/data/Florent/results/${OBS}/lcurve_${TW}_${inst}
+#sums=/mnt/xmmcat/3XMM_data/SumSas_files_4Webcat
+#fbks=/mnt/data/Ines/data/fbktsr_dr5
 
-fbk_file=$(ls $fbks/*$OBS*$INST*FBKTSR*)
+fbks=/mnt/data/Florent/fbktsr/$OBS
+
+clean_file=$path/${INSTOUT}_clean.fits
+gti_file=$path/${INSTOUT}_gti.fits
+img_file=$path/${INSTOUT}_image.fits
+nosrc_file=$path/${INSTOUT}_sourceless.fits
+path_out=/mnt/data/Florent/results/$OBS/lcurve_${TW}_${INSTOUT}
+results=/mnt/data/Florent/results/$OBS
+
+output_log=$path_out/manual.log
+
+# FBKTSR
+
+fbk_file=$(ls $fbks/*$OBS*$INSTOUT*FBKTSR*)
+
+# Identification number for manual lightcurve
+
+IDO=$(($ID + 100))
 
 if [ ! -d $path_out ]; then mkdir $path_out; fi
-cd $path_out
 
 # Setting SAS tools
 export SAS_ODF=$path
@@ -114,46 +126,39 @@ export HEADAS=/usr/local/heasoft-6.22.1/x86_64-unknown-linux-gnu-libc2.19/
 . $HEADAS/headas-init.sh
 . /usr/local/SAS/xmmsas_20170719_1539/setsas.sh
 
-##################################################################################################################################################################################
-# Source selection
-echo "  Select the source and background extraction region (X,Y,R): "
-if [ ! -f $path/${DL}_${TW}_1.0_${BS}/sources.pdf ]; then python3 /home/pastor/python3 -Wignore $SCRIPTS/renderer.py $folder/$OBS/${DL}_${TW}_1.0_${BS} $clean_file -obs $OBS -tw $TW -dl $DL
-fi
-if [ $ID == "1" ]; then 
-ds9 $clean_file -bin factor 64 -scale log -cmap b -mode region &
-evince $path/${DL}_${TW}_1.0_${BS}/sources.pdf &
-fi
-evselect table=$clean_file imagebinning=binSize imageset=$img_file withimageset=yes xcolumn=X ycolumn=Y ximagebinsize=80 yimagebinsize=80
-data=$(cat $path/${DL}_${TW}_1.0_${BS}/detected_variable_sources.csv | grep "^${ID};")
-title3 $data
+################################################################################
+#                                                                              #
+# Source selection                                                             #
+#                                                                              #
+################################################################################
+
+title2 "Preliminaries"
+
+cd $path_out
 
 ###
-# Source name and coordinates
+# Reading data from the detected_variable_sources file
 ###
 
-IFS=';' read -r -a array <<< "$data"
-n=${array[0]}
-ccd=${array[1]}
-rawx=${array[2]}
-rawy=${array[3]}
-srcR=$((${array[4]} * 64))
+data=$(cat $results/${DL}_${TW}_${BS}_${GTR}_${INSTIN}/ds9_variable_sources.reg | grep 'text="'$ID'"')
 
-ecoordconv imageset=$img_file coordtype=raw x=$rawx y=$rawy ccdno=$ccd |grep 'X: Y:'
+###
+# Defining source position
+###
 
-input "Proceed? [y/n] " reply
-if [[ $reply = [n,N]* ]] ; then exit; fi
+RAd=$(echo $data | awk '{print $2}' | sed "s/.$//")
+DEC=$(echo $data | awk '{print $3}' | sed "s/.$//")
+R=$(echo $data | awk '{print $4}' | sed "s/.$//")
+srcR=$(echo "$R * 64" | bc)
 
-echo -e "\n"
-input "Source position     [X] " srcX
-input "Source position     [Y] " srcY 
-input "Background position [X] " bgdX
-input "Background position [Y] " bgdY
-input "Radius              [R] " R
-echo -e "\n"
+srcXY=$(ecoordconv imageset=$img_file coordtype=eqpos x=$RAd y=$DEC | tee /dev/tty|grep 'X: Y:'|sed 's/X: Y: //'|sed 's/ /,/g'|sed 's/,//')
 
-srccoord=$(ecoordconv imageset=$img_file coordtype=POS x=$srcX y=$srcY pos2eqpos=yes | tee /dev/tty|grep ' RA: DEC: ' | sed 's/ RA: DEC: //g')
+# Correcting source and background position
 
-##################################################################################################################################################################################
+srcexp=$(eregionanalyse imageset=$img_file srcexp="(X,Y) in CIRCLE($srcXY,$srcR)" backval=0.1|tee /dev/tty|grep 'SASCIRCLE'|sed 's/SASCIRCLE: //g')
+srcR=$(echo $srcexp | sed "s/(X,Y) in CIRCLE([0-9]*.[0-9]*,[0-9]*.[0-9]*,//" | sed "s/)//")
+# arcsec
+srcRas=$(bc <<< "scale=2; $srcR * 0.05")
 
 ###
 # Source name and coordinates
@@ -200,7 +205,7 @@ bgdXY=$(ebkgreg withsrclist=no withcoords=yes imageset=$img_file x=$RAd y=$DEC r
 bgdexp="(X,Y) in CIRCLE($bgdXY,$srcR)"
 
 sleep 1
-echo -e "\nExtracting data obs. $observation source $src with the following coordinates: \n  Source     : $srcexp\n  Background : $bgdexp"
+echo -e "\nExtracting data obs. $OBS source $src with the following coordinates: \n  Source     : $srcexp\n  Background : $bgdexp"
 
 
 ################################################################################
@@ -210,7 +215,7 @@ echo -e "\nExtracting data obs. $observation source $src with the following coor
 ################################################################################
 
 title2 "Extracting lightcurve"
-if [ ! -f $path/${inst}_gti.wi ]; then gti2xronwin -i $path/${inst}_gti.fits -o $path/${inst}_gti.wi; fi
+if [ ! -f $path/${INSTOUT}_gti.wi ]; then gti2xronwin -i $path/${INSTOUT}_gti.fits -o $path/${INSTOUT}_gti.wi; fi
 
 title3 "Frame time"
 frmtime=$(hexdump -e '80/1 "%_p" "\n"' $clean_file | grep -m 1 FRMTIME | awk '{print $3}')
@@ -236,8 +241,8 @@ epiclccorr srctslist=$path_out/${src}_lc_${frmtime}_src.lc eventlist=$clean_file
 sleep 1
 
 title3 "lcstats"
-lcstats cfile1="$path_out/${src}_lccorr_${frmtime}.lc" window=$path/${inst}_gti.wi dtnb=$frmtime nbint=1000000 tchat=2 logname="$path_out/${src}_xronos.log"
-P=$(lcstats cfile1="$path_out/${src}_lccorr_${frmtime}.lc" window=$path/${inst}_gti.wi dtnb=$frmtime nbint=1000000 tchat=2 logname="$path_out/${src}_xronos.log" | grep "Prob of constancy")
+lcstats cfile1="$path_out/${src}_lccorr_${frmtime}.lc" window=$path/${INSTOUT}_gti.wi dtnb=$frmtime nbint=1000000 tchat=2 logname="$path_out/${src}_xronos.log"
+P=$(lcstats cfile1="$path_out/${src}_lccorr_${frmtime}.lc" window=$path/${INSTOUT}_gti.wi dtnb=$frmtime nbint=1000000 tchat=2 logname="$path_out/${src}_xronos.log" | grep "Prob of constancy")
 
 sleep 5
 P_chisq=$(echo $P | sed "s/Chi-Square Prob of constancy. //" | sed "s/ (0 means.*//")
@@ -247,7 +252,7 @@ echo -e "Probabilities of constancy : \n\tP_chisq = $P_chisq\n\tP_KS    = $P_KS"
 
 title3 "lcurve"
 
-python3 -W"ignore" $scripts/lcurve.py -path /mnt/data/Florent/results -obs $observation -inst $inst -name $src -tw $TW -mode medium -pcs $P_chisq -pks $P_KS -n $id
+python3 $SCRIPTS/lcurve.py -path /mnt/data/Florent/results -obs $OBS -inst $INSTOUT -name $src -tw $TW -ft $frmtime -mode medium -pcs $P_chisq -pks $P_KS -n $IDO
 
 end=`date +%s`
 runtime=$((end-start))
@@ -257,7 +262,8 @@ runtime=$((end-start))
 ###
 
 echo -e > $path_out/${src}_region.txt "Source     = $srcexp\nBackground = $bgdexp\nTotal time = $runtime"
-echo -e >> $output_log "$observation $id $src $inst $DL $TW $P_chisq $P_KS"
+echo -e >> $output_log "$OBS $IDO $src $INSTOUT $DL $TW $P_chisq $P_KS"
 
-echo -e " # Total time obs. $observation : $runtime seconds"
-echo -e "\nObservation $observation ended\nTotal time = $runtime seconds"
+echo -e " # Total time obs. $OBS : $runtime seconds"
+echo -e "\nObservation $OBS ended\nTotal time = $runtime seconds"
+

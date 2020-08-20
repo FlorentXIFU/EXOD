@@ -43,7 +43,8 @@ parser.add_argument("-src", help="Path to the source's lightcurve fits file", na
 parser.add_argument("-bgd", help="Path to the background's lightcurve fits file", nargs='?', type=str, default=None)
 parser.add_argument("-gti", help="Path to the GTI of the observation", nargs='?', type=str, default=None)
 parser.add_argument("-tw", help="Time window", nargs='?', type=int, default=100)
-parser.add_argument("-n", help="Lightcurve number", nargs='?', type=str, default="")
+parser.add_argument("-ft", help="Frame time", nargs='?', type=float, default=0)
+parser.add_argument("-n", help="Lightcurve number", nargs='?', type=int, default=None)
 parser.add_argument("-pcs", dest="pcs", help="Chi-square probability of constancy", nargs='?', type=float, default=None)
 parser.add_argument("-pks", dest="pks", help="Kolmogorov-Smirnov probability of constancy", nargs='?', type=float, default=None)
 parser.add_argument("-mode", dest="mode", help="Plot style: monochrome / medium / color", nargs='?', type=str, default="medium")
@@ -59,7 +60,7 @@ if args.path[-1] == '/' :
 
 # Source and background files
 if args.src == None :
-    lccorr = '{0}/{1}/lcurve_{2}_{4}/{3}_lccorr_{2}.lc'.format(args.path, args.obs, args.tw, args.name, args.inst)
+    lccorr = '{0}/{1}/lcurve_{2}_{4}/{3}_lccorr_{5}.lc'.format(args.path, args.obs, args.tw, args.name, args.inst, args.tw)
     print(args.name)
     if path.exists(lccorr) :
         args.src = lccorr
@@ -257,8 +258,10 @@ plt.text(0.03, 1.1, "id : {0}".format(args.n), transform = ax.transAxes, fontsiz
 plt.text(0.2, 1.1, "inst : {0}".format(args.inst), transform = ax.transAxes, fontsize=16)
 plt.text(0.5, 1.1, "src : {0}".format(src), transform = ax.transAxes, fontsize=16)
 # Probabilities of constancy
-plt.text(0.1, 1.03, r"P($\chi^2$) = {0:.2e} ".format(args.pcs), transform = ax.transAxes, fontsize=16)
-plt.text(0.52, 1.03, r"P(KS) = {0:.2e} ".format(args.pks), transform = ax.transAxes, fontsize=16)
+if args.pcs != None:
+    plt.text(0.1, 1.03, r"P($\chi^2$) = {0:.2e} ".format(args.pcs), transform = ax.transAxes, fontsize=16)
+if args.pks != None:
+    plt.text(0.52, 1.03, r"P(KS) = {0:.2e} ".format(args.pks), transform = ax.transAxes, fontsize=16)
 
 # Setup
 plt.xlim(xmin, xmax)
