@@ -2,162 +2,158 @@
 
 ################################################################################
 #                                                                              #
-# Variabilitectron - Searching variability into XMM-Newton data                #
+# EXOD-v2 - EPIC XMM-Newton Outburst Detector                                  #
 #                                                                              #
-# Automatic lightcurve generation of the detected variable sources             #
+# Manual lightcurve generation of the detected variable sources                #
 #                                                                              #
-# Inés Pastor Marazuela (2018) - ines.pastor.marazuela@gmail.com               #
+# Florent Castellani  (2020) -  castellani.flo@gmail.com                       #
 #                                                                              #
 ################################################################################
 
-# bash script generating lightcurves and computing the chi-square and
-# Kolmogorov-Smirnov probability of constancy for sources detected by
-# Variabilitectron as being variable
-
-# Style functions
 ################################################################################
+#                                                                              #
+# Parsing arguments                                                            #
+#                                                                              #
+################################################################################
+
+# Default variables
+DL=24 ; TW=100 ; GTR=1.0 ; BS=5; INST=PN; ID=1
+# Default folders
+FOLDER=/mnt/data/Florent/data
+SCRIPTS=/home/florent/EXOD/scripts
+
+# Input variables
+while [[ $# -gt 0 ]]; do
+case "$1" in
+  -o|-obs|--observation)  OBS=${2}
+  shift; shift ;;
+  # Variables
+  -dl|--detection-level)  DL=${2:-$DL}
+  shift; shift ;;
+  -tw|--time-window)      TW=${2:-$TW}
+  shift; shift ;;
+  -gtr|--good-time-ratio) GTR=${2:-$GTR}
+  shift; shift ;;
+  -bs|--box-size)         BS=${2:-$BS}
+  shift; shift ;;
+  -i|--inst)              INST=${2:-$INST}
+  shift; shift ;;
+  -id|--source-id)        ID=${2:-$ID}
+  shift; shift ;;
+  # Folders
+  -f|--folder)            FOLDER=${2:-$FOLDER}
+  shift; shift ;;
+  -s|--scripts)           SCRIPTS=${2:-$SCRIPTS}
+  shift; shift ;;
+esac
+done
+
+output_log=/mnt/data/Florent/results/$OBS/excluded_manual/output.log
+path=$FOLDER/$OBS
+
+###
+# Defining functions
+###
 
 title1(){
-  message=$1
-	i=0; x='===='
-	while [[ i -lt ${#message} ]]; do x='='$x; ((++i)); done
+  message=$1; i=0; x='===='
+  while [[ i -lt ${#message} ]]; do x='='$x; ((++i)); done
   echo -e "\n\t  $message \n\t$x\n"
 }
 
 title2(){
-  message="$1 $observation"
-	i=0; x='----'
-	while [[ i -lt ${#message} ]]; do x='-'$x; ((++i)); done
+  message="$1 $OBS"; i=0; x='----'
+  while [[ i -lt ${#message} ]]; do x='-'$x; ((++i)); done
   echo -e "\n\t  $message \n\t$x"
 }
 
 title3(){
-  message="$1 $observation"
-  echo -e "\n # $message"
+  message="$1 $OBS"; echo -e "\n # $message"
 }
 
-# Useful
-########################################################################
-
-var(){
-  x=$1
-  out=$(cat /home/florent/EXOD/scripts/file_names.py | grep ^$x | awk '{print $3}' | sed 's/"//g')
-  echo $out
+input(){
+  message="$1"; var="$2"
+  read -p "$(tput setaf 6)$message $(tput sgr 0)" out 
+  printf -v $var $out
 }
 
 ################################################################################
-#                                                                              #
-# Preliminaries                                                                #
-#                                                                              #
-################################################################################
 
-#read arguments
 start=`date +%s`
 
-# Printing help
-if [[ $1 == "-h" ]] || [[ $1 == "--help" ]] ; then
-	echo -e "\
-	Parameters to use :\n\
-	@path       : full path to the observation\n\
-  	@scripts    : full path to the scripts folder\n\
-	@inst	    : type of detector\n\
-	@id         : id number of the detected source within the observation\n\
-	@DL         : Detection level used for the variable sources detection\n\
-	@TW         : Time window used for the variable sources detection\n\
-	@GTR        : Good Time Ratio of acceptability for a time window\n\
-	@BS         : Box size in pixels used for the variable sources detection\n\
-	@output_log : full path to the document storing the information of the detection\n\
-	"
-	exit
+title1 "Lightcurve Obs. $OBS Src. $ID"
 
-else
-
-path="$1"
-scripts="$2"
-inst="$3"
-id="$4"
-DL="$5"
-TW="$6"
-GTR="$7"
-BS="$8"
-output_log="$9"
-folder=${path:0:-11}
-observation=${path: -10}
-
-title1 "Lightcurve Obs. $observation Src. $id"
+echo -e "\tFOLDER          = ${FOLDER}"
+echo -e "\tSCRIPTS         = ${SCRIPTS}"
+echo -e "\tOUTPUT LOG      = ${output_log}\n"
+echo -e "\tDETECTION LEVEL = ${DL}"
+echo -e "\tTIME WINDOW     = ${TW}"
+echo -e "\tGOOD TIME RATIO = ${GTR}" 
+echo -e "\tBOX SIZE        = ${BS}"
+echo -e "\tINSTRUMENT      = ${INST}"
 
 # Selecting the files and paths
-
-#sums=/mnt/xmmcat/3XMM_data/SumSas_files_4Webcat
-#fbks=/mnt/data/Ines/data/fbktsr_dr5
-
-
-fbks=/mnt/data/Florent/fbktsr/${observation}
+fbks=/mnt/data/Florent/fbktsr/${OBS}
 clean_file=$path/${inst}_clean.fits
 gti_file=$path/${inst}_gti.fits
 img_file=$path/${inst}_image.fits
 nosrc_file=$path/${inst}_sourceless.fits
 
-results=/mnt/data/Florent/results/${observation}
-path_out=/mnt/data/Florent/results/${observation}/lcurve_${TW}_${inst}
+results=/mnt/data/Florent/results/${OBS}
+path_out=/mnt/data/Florent/results/${OBS}/lcurve_${TW}_${inst}
 
-#Only for DR10
-#path_odf=/mnt/xmmcat/4XMM_data/DR10_incr_data/${observation}/odf
+fbk_file=$(ls $fbks/*$OBS*$INST*FBKTSR*)
 
 if [ ! -d $path_out ]; then mkdir $path_out; fi
-
 cd $path_out
 
 # Setting SAS tools
-
 export SAS_ODF=$path
-#export SAS_ODF=$path_odf
 export SAS_CCF=$path/ccf.cif
-export HEADAS=$(var HEADAS)
+export HEADAS=/usr/local/heasoft-6.22.1/x86_64-unknown-linux-gnu-libc2.19/
 . $HEADAS/headas-init.sh
-. $(var SAS)
+. /usr/local/SAS/xmmsas_20170719_1539/setsas.sh
 
-# FBKTSR
-
-fbk_file=$(ls $fbks/*$observation*$inst*FBKTSR*)
-
-################################################################################
-#                                                                              #
-# Source selection                                                             #
-#                                                                              #
-################################################################################
-
-title2 "Preliminaries"
-
-if [ ! -f $img_file ]; then
-  evselect table=$clean_file imagebinning=binSize imageset=$img_file withimageset=yes xcolumn=X ycolumn=Y ximagebinsize=80 yimagebinsize=80 -V 0
+##################################################################################################################################################################################
+# Source selection
+echo "  Select the source and background extraction region (X,Y,R): "
+if [ ! -f $path/${DL}_${TW}_1.0_${BS}/sources.pdf ]; then python3 /home/pastor/python3 -Wignore $SCRIPTS/renderer.py $folder/$OBS/${DL}_${TW}_1.0_${BS} $clean_file -obs $OBS -tw $TW -dl $DL
 fi
+if [ $ID == "1" ]; then 
+ds9 $clean_file -bin factor 64 -scale log -cmap b -mode region &
+evince $path/${DL}_${TW}_1.0_${BS}/sources.pdf &
+fi
+evselect table=$clean_file imagebinning=binSize imageset=$img_file withimageset=yes xcolumn=X ycolumn=Y ximagebinsize=80 yimagebinsize=80
+data=$(cat $path/${DL}_${TW}_1.0_${BS}/detected_variable_sources.csv | grep "^${ID};")
+title3 $data
 
 ###
-# Reading data from the detected_variable_sources file
+# Source name and coordinates
 ###
 
-data=$(cat $results/${DL}_${TW}_${BS}_${GTR}_${inst}/ds9_variable_sources.reg | grep 'text="'$id'"')
+IFS=';' read -r -a array <<< "$data"
+n=${array[0]}
+ccd=${array[1]}
+rawx=${array[2]}
+rawy=${array[3]}
+srcR=$((${array[4]} * 64))
 
-###
-# Defining source position
-###
+ecoordconv imageset=$img_file coordtype=raw x=$rawx y=$rawy ccdno=$ccd |grep 'X: Y:'
 
-RAd=$(echo $data | awk '{print $2}' | sed "s/.$//")
-DEC=$(echo $data | awk '{print $3}' | sed "s/.$//")
-R=$(echo $data | awk '{print $4}' | sed "s/.$//")
-srcR=$(echo "$R * 64" | bc)
+input "Proceed? [y/n] " reply
+if [[ $reply = [n,N]* ]] ; then exit; fi
 
-# echo "data=$data, ccd=$ccd, RAd=$RAd, DEC=$DEC, R=$R, srcR=$srcR"
+echo -e "\n"
+input "Source position     [X] " srcX
+input "Source position     [Y] " srcY 
+input "Background position [X] " bgdX
+input "Background position [Y] " bgdY
+input "Radius              [R] " R
+echo -e "\n"
 
-srcXY=$(ecoordconv imageset=$img_file coordtype=eqpos x=$RAd y=$DEC | tee /dev/tty|grep 'X: Y:'|sed 's/X: Y: //'|sed 's/ /,/g'|sed 's/,//')
+srccoord=$(ecoordconv imageset=$img_file coordtype=POS x=$srcX y=$srcY pos2eqpos=yes | tee /dev/tty|grep ' RA: DEC: ' | sed 's/ RA: DEC: //g')
 
-# Correcting source and background position
-
-srcexp=$(eregionanalyse imageset=$img_file srcexp="(X,Y) in CIRCLE($srcXY,$srcR)" backval=0.1|tee /dev/tty|grep 'SASCIRCLE'|sed 's/SASCIRCLE: //g')
-srcR=$(echo $srcexp | sed "s/(X,Y) in CIRCLE([0-9]*.[0-9]*,[0-9]*.[0-9]*,//" | sed "s/)//")
-# arcsec
-srcRas=$(bc <<< "scale=2; $srcR * 0.05")
+##################################################################################################################################################################################
 
 ###
 # Source name and coordinates
@@ -265,4 +261,3 @@ echo -e >> $output_log "$observation $id $src $inst $DL $TW $P_chisq $P_KS"
 
 echo -e " # Total time obs. $observation : $runtime seconds"
 echo -e "\nObservation $observation ended\nTotal time = $runtime seconds"
-fi

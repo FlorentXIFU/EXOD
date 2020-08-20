@@ -27,9 +27,6 @@ while read line ; do
 # Extracting observation number
 OBS=$(echo $line | awk '{print $1}')
 
-for obsdr in ${observations[@]}; do
-if [ $obsdr == $OBS ] ; then
-
 # Extracting science mode for each detector
 modePN=$(echo $line | awk '{print $2}' | sed 's/.$//' | sed 's/^.//')
 modeM1=$(echo $line | awk '{print $3}' | sed 's/.$//' | sed 's/^.//')
@@ -46,7 +43,7 @@ nbM1=$((nbM1+0))
 nbM2=$((nbM2+0))
 
 # Extracting lightcurves (max 5) for each instrument
-#if [ ! -d $RESULTS/$OBS/lcurve_100_PN ]; then
+if [ ! -d $RESULTS/$OBS/lcurve_100_PN ]; then
 if [ $modePN == "PFW" ] || [ $modePN == "PFWE" ]; then
 countPN=1
 while [[ $countPN -le $nbPN ]] && [[ $nbPN -le 5 ]] ; do
@@ -54,11 +51,11 @@ while [[ $countPN -le $nbPN ]] && [[ $nbPN -le 5 ]] ; do
   ((++countPN))
 done
 fi
-#fi
+fi
 
 echo -e "Lighcurves done for $OBS with PN instrument"
 
-#if [ ! -d $RESULTS/$OBS/lcurve_100_M1 ]; then
+if [ ! -d $RESULTS/$OBS/lcurve_100_M1 ]; then
 if [ $modeM1 == "PFW" ] ; then
 countM1=1
 while [[ $countM1 -le $nbM1 ]] && [[ $nbM1 -le 5 ]] ; do
@@ -66,11 +63,11 @@ while [[ $countM1 -le $nbM1 ]] && [[ $nbM1 -le 5 ]] ; do
   ((++countM1))
 done
 fi
-#fi
+fi
 
 echo -e "Lighcurves done for $OBS with M1 instrument"
 
-#if [ ! -d $RESULTS/$OBS/lcurve_100_M2 ]; then
+if [ ! -d $RESULTS/$OBS/lcurve_100_M2 ]; then
 if [ $modeM2 == "PFW" ] ; then
 countM2=1
 while [[ $countM2 -le $nbM2 ]] && [[ $nbM2 -le 5 ]] ; do
@@ -78,10 +75,7 @@ while [[ $countM2 -le $nbM2 ]] && [[ $nbM2 -le 5 ]] ; do
   ((++countM2))
 done
 fi
-#fi
-
 fi
-done
 
 echo -e "Lighcurves done for $OBS with M2 instrument"
 

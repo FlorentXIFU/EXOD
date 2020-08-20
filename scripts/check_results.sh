@@ -14,12 +14,14 @@ DATA=/mnt/data/Florent/data
 FOLDER=/mnt/data/Florent/results
 output_log=/home/florent/results.log
 output_file=/home/florent/triple_lightcurves.pdf
+output_file_lc=/home/florent/var_lightcurves.pdf
 
 cd $FOLDER
 observations=(0*)
 nb_img=${#observations[@]}
 echo $nb_img
 files=()
+fileslc=()
 
 for obs in ${observations[@]}; do
 
@@ -74,14 +76,28 @@ fi
 if [[ "$testPN" == 'circle' ]]; then
 numPN=$(cat $FOLDER/$obs/8_100_5_1.0_PN/ds9_variable_sources.reg | grep 'text=' | awk '{print $1}' | wc -l)
 inst="$inst\tPN=${numPN}"
+if [ -d $FOLDER/$obs/lcurve_100_PN ] ; then
+num1=$(ls -l $FOLDER/$obs/lcurve_100_PN/*.pdf | wc -l)
+if [ $num1 -gt 0 ] ; then fileslc+=($FOLDER/$obs/lcurve_100_PN/*.pdf) ; fi
 fi
+fi
+
 if [[ "$testM1" == 'circle' ]]; then
 numM1=$(cat $FOLDER/$obs/8_100_5_1.0_M1/ds9_variable_sources.reg | grep 'text=' | awk '{print $1}' | wc -l)
 inst="$inst\tM1=${numM1}"
+if [ -d $FOLDER/$obs/lcurve_100_M1 ] ; then
+num2=$(ls -l $FOLDER/$obs/lcurve_100_M1/*.pdf | wc -l)
+if [ $num2 -gt 0 ] ; then fileslc+=($FOLDER/$obs/lcurve_100_M1/*.pdf) ; fi
 fi
+fi
+
 if [[ "$testM2" == 'circle' ]]; then
 numM2=$(cat $FOLDER/$obs/8_100_5_1.0_M2/ds9_variable_sources.reg | grep 'text=' | awk '{print $1}' | wc -l)
 inst="$inst\tM2=${numM2}"
+if [ -d $FOLDER/$obs/lcurve_100_M2 ] ; then
+num3=$(ls -l $FOLDER/$obs/lcurve_100_M2/*.pdf | wc -l)
+if [ $num3 -gt 0 ] ; then fileslc+=($FOLDER/$obs/lcurve_100_M2/*.pdf) ; fi
+fi
 fi
 
 # Testing if triple correlation variability files and lightcurves
@@ -109,15 +125,14 @@ done
 
 # Creation of big PDF with all triple correlation lightcurves
 
-#echo ${files[@]}
-
 gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -sOutputFile=$output_file ${files[@]}
 
 echo -e "Triple correlation file : $output_file"
 
+# Creation of big PDF with all lightcurves
 
+gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -sOutputFile=$output_file_lc ${fileslc[@]}
 
-
-
+echo -e "Lightcurves file : $output_file_lc"
 
 
