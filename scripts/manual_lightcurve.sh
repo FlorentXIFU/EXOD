@@ -17,10 +17,10 @@
 ################################################################################
 
 # Default variables
-DL=8 ; TW=100 ; GTR=1.0 ; BS=3; ID=1
+DL=8 ; TW=100 ; GTR=1.0 ; BS=5; ID=1
 # Default folders
-FOLDER=/mnt/data/Ines/data/DR5
-SCRIPTS=/mnt/data/Ines/progs
+FOLDER=/home/monrillo/data
+SCRIPTS=/home/monrillo/EXOD/scripts
 
 # Input variables
 while [[ $# -gt 0 ]]; do
@@ -36,6 +36,10 @@ case "$1" in
   shift; shift ;;
   -bs|--box-size)         BS=${2:-$BS}
   shift; shift ;;
+  -ii|--instrument-in)    INSTIN=${2}
+  shift; shift ;;
+  -io|--instrument-out)   INSTOUT=${2}
+  shift; shift ;;
   -id|--source-id)        ID=${2:-$ID}
   shift; shift ;;
   # Folders
@@ -46,8 +50,8 @@ case "$1" in
 esac
 done
 
-output_log=$FOLDER/excluded_auto/sources_variability_${DL}_${TW}_${GTR}_${BS}
 path=$FOLDER/$OBS
+output_log=$path/lcurve_${TW}_${INSTOUT}/output.log
 
 ###
 # Defining functions
@@ -79,7 +83,7 @@ input(){
 
 start=`date +%s`
 
-title1 "Lightcurve Obs. $OBS Src. $ID"
+title1 "Lightcurve Obs. $OBS Inst_input. $INSTIN Src. $ID"
 
 echo -e "\tFOLDER          = ${FOLDER}"
 echo -e "\tSCRIPTS         = ${SCRIPTS}"
@@ -88,76 +92,81 @@ echo -e "\tDETECTION LEVEL = ${DL}"
 echo -e "\tTIME WINDOW     = ${TW}"
 echo -e "\tGOOD TIME RATIO = ${GTR}" 
 echo -e "\tBOX SIZE        = ${BS}"
-echo -e "\tCPUS            = ${CPUS}"
+echo -e "\tINST INPUT      = ${INSTIN}"
+echo -e "\tINST OUTPUT     = ${INSTOUT}"
 
 # Selecting the files and paths
-clean_file=$path/PN_clean.fits
-gti_file=$path/PN_gti.fits
-img_file=$path/PN_image.fits
-sum_file=$(ls $path/*SUM.ASC)
-fbk_file=$(ls $path/*$OBS*PNS*FBKTSR*)
-path_out=$path/lcurve_${TW}
+
+#sums=/mnt/xmmcat/3XMM_data/SumSas_files_4Webcat
+#fbks=/mnt/data/Ines/data/fbktsr_dr5
+
+sums=$path
+fbks=$path
+clean_file=$path/${INSTOUT}_clean.fits
+gti_file=$path/${INSTOUT}_gti.fits
+img_file=$path/${INSTOUT}_image.fits
+nosrc_file=$path/${INSTOUT}_sourceless.fits
+path_out=$path/lcurve_${TW}_${INSTOUT}
+
+# FBKTSR
+
+fbk_file=$(ls $fbks/*$OBS*$INSTOUT*FBKTSR*)
+
+# Identification number for manual lightcurve
+
+IDO=$(($ID + 100))
+
 if [ ! -d $path_out ]; then mkdir $path_out; fi
 cd $path
 
 # Setting SAS tools
 export SAS_ODF=$path
 export SAS_CCF=$path/ccf.cif
-export HEADAS=/usr/local/heasoft-6.22.1/x86_64-unknown-linux-gnu-libc2.19/
+export HEADAS=/home/monrillo/heasoft-6.26.1/x86_64-pc-linux-gnu-libc2.27
 . $HEADAS/headas-init.sh
-. /usr/local/SAS/xmmsas_20170719_1539/setsas.sh
-if [ ! -f $path/ccf.cif ]; then cifbuild; fi
+. /home/monrillo/SAS/xmmsas_20190531_1155/setsas.sh
 
-# Setting SAS tools	
-export SAS_ODF=$path						
-export SAS_CCF=$path/ccf.cif
-export SAS_VERBOSITY=0
-bash /usr/local/SAS/xmmsas_20170719_1539/setsas.sh
-if [ ! -f $path/ccf.cif ]; then cifbuild; fi
+################################################################################
+#                                                                              #
+# Source selection                                                             #
+#                                                                              #
+################################################################################
 
-# Source selection
-echo "  Select the source and background extraction region (X,Y,R): "
-if [ ! -f $path/${DL}_${TW}_1.0_${BS}/sources.pdf ]; then python3 /home/pastor/python3 -Wignore $SCRIPTS/renderer.py $folder/$OBS/${DL}_${TW}_1.0_${BS} $clean_file -obs $OBS -tw $TW -dl $DL
-fi
-if [ $ID == "1" ]; then 
-ds9 $clean_file -bin factor 64 -scale log -cmap b -mode region &
-evince $path/${DL}_${TW}_1.0_${BS}/sources.pdf &
-fi
-evselect table=$clean_file imagebinning=binSize imageset=$img_file withimageset=yes xcolumn=X ycolumn=Y ximagebinsize=80 yimagebinsize=80
-data=$(cat $path/${DL}_${TW}_1.0_${BS}/detected_variable_sources.csv | grep "^${ID};")
-title3 $data
+title2 "Preliminaries"
+
+cd $path_out
+
+###
+# Reading data from the detected_variable_sources file
+###
+
+data=$(cat $path/${DL}_${TW}_${BS}_${GTR}_${INSTIN}/ds9_variable_sources.reg | grep 'text="'$ID'"')
+
+###
+# Defining source position
+###
+
+RAd=$(echo $data | awk '{print $2}' | sed "s/.$//")
+DEC=$(echo $data | awk '{print $3}' | sed "s/.$//")
+R=$(echo $data | awk '{print $4}' | sed "s/.$//")
+srcR=$(echo "$R * 64" | bc)
+
+srcXY=$(ecoordconv imageset=$img_file coordtype=eqpos x=$RAd y=$DEC | tee /dev/tty|grep 'X: Y:'|sed 's/X: Y: //'|sed 's/ /,/g'|sed 's/,//')
+
+# Correcting source and background position
+
+srcexp=$(eregionanalyse imageset=$img_file srcexp="(X,Y) in CIRCLE($srcXY,$srcR)" backval=0.1|tee /dev/tty|grep 'SASCIRCLE'|sed 's/SASCIRCLE: //g')
+srcR=$(echo $srcexp | sed "s/(X,Y) in CIRCLE([0-9]*.[0-9]*,[0-9]*.[0-9]*,//" | sed "s/)//")
+# arcsec
+srcRas=$(bc <<< "scale=2; $srcR * 0.05")
 
 ###
 # Source name and coordinates
 ###
 
-IFS=';' read -r -a array <<< "$data"
-n=${array[0]}
-ccd=${array[1]}
-rawx=${array[2]}
-rawy=${array[3]}
-srcR=$((${array[4]} * 64))
-
-ecoordconv imageset=$img_file coordtype=raw x=$rawx y=$rawy ccdno=$ccd |grep 'X: Y:'
-
-input "Proceed? [y/n] " reply
-if [[ $reply = [n,N]* ]] ; then exit; fi
-
-echo -e "\n"
-input "Source position     [X] " srcX
-input "Source position     [Y] " srcY 
-input "Background position [X] " bgdX
-input "Background position [Y] " bgdY
-input "Radius              [R] " R
-echo -e "\n"
-
-srccoord=$(ecoordconv imageset=$img_file coordtype=POS x=$srcX y=$srcY pos2eqpos=yes | tee /dev/tty|grep ' RA: DEC: ' | sed 's/ RA: DEC: //g')
-
-# Right ascension
-# Decimal degrees
-RAd=$(echo $srccoord | awk '{print $1}')
-# h
+# Right ascension in hours
 RA=$(bc <<< "scale=5; $RAd / 15")
+
 if [[ $RA == .* ]]; then RA=0$RA; fi
 h=$(echo $RA | sed "s/.[0-9]*$//g")
 m=$(bc <<< "scale=5; ($RA - $h) * 60" | sed "s/.[0-9]*$//g")
@@ -167,7 +176,8 @@ if [ ${#m} == 1 ]; then m=0$m ; elif [ ${#m} == 0 ] ; then m=00 ; fi
 if [ ${#s} == 1 ]; then s=0$s ; elif [ ${#s} == 0 ] ; then s=00; fi
 
 # Declination
-DEC=$(echo $srccoord | awk '{print $2}')
+
+# DEC=$(echo $srccoord | awk '{print $2}')
 if [[ $DEC == -* ]]; then DEC=${DEC#"-"}; link="-"; else link="_"; fi
 if [[ $DEC == .* ]]; then DEC=0$DEC; fi
 dg=$(echo $DEC | sed "s/.[0-9]*$//g")
@@ -179,47 +189,70 @@ if [ ${#as} == 1 ]; then as=0$as ; elif [ ${#as} == 0 ] ; then as=00; fi
 if [[ $link == "-" ]]; then DEC=$link$DEC; fi
 
 sleep 1
-# Source name
+# Source namedg$am$as
 src=J$h$m$s$link$dg$am$as
 echo -e "\n\t$src\n"
 
-srcexp="(X,Y) in CIRCLE($srcX,$srcY,$R)"
-bgdexp="(X,Y) in CIRCLE($bgdX,$bgdY,$R)"
+###
+# Background extraction region
+###
 
-######################################################################
-#                                                                    #
-# Light curve generation                                             #
-#                                                                    #
-######################################################################
+if [ ! -f $nosrc_file ]; then
+evselect table=$clean_file withfilteredset=Y filteredset=$nosrc_file destruct=Y keepfilteroutput=T expression="region($fbk_file:REGION,X,Y)" -V 0
+fi
 
+bgdXY=$(ebkgreg withsrclist=no withcoords=yes imageset=$img_file x=$RAd y=$DEC r=$srcRas coordtype=EQPOS | grep 'X,Y Sky Coord.' | head -1 | awk '{print$5$6}')
+bgdexp="(X,Y) in CIRCLE($bgdXY,$srcR)"
+
+sleep 1
+echo -e "\nExtracting data obs. $observation source $src with the following coordinates: \n  Source     : $srcexp\n  Background : $bgdexp"
+
+
+################################################################################
+#                                                                              #
+# Lightcurve generation                                                        #
+#                                                                              #
+################################################################################
 
 title2 "Extracting lightcurve"
-if [ ! -f $path/PN_gti.wi ]; then gti2xronwin -i $path/PN_gti.fits -o $path/PN_gti.wi; fi
+if [ ! -f $path/${INSTOUT}_gti.wi ]; then gti2xronwin -i $path/${INSTOUT}_gti.fits -o $path/${INSTOUT}_gti.wi; fi
 
-title3 "evselect 0.0734 s"
-evselect table=$clean_file energycolumn=PI expression="$srcexp" withrateset=yes rateset=$path_out/${src}_lc_0.0734_src.lc timebinsize=0.0734 maketimecolumn=yes makeratecolumn=yes -V 0
-evselect table=$clean_file energycolumn=PI expression="$bgdexp" withrateset=yes rateset=$path_out/${src}_lc_0.0734_bgd.lc timebinsize=0.0734 maketimecolumn=yes makeratecolumn=yes -V 0
+title3 "Frame time"
+frmtime=$(hexdump -e '80/1 "%_p" "\n"' $clean_file | grep -m 1 FRMTIME | awk '{print $3}')
+frmtime=$(bc <<< "$frmtime * 0.001")
+frmtime=$(bc <<< "scale=3; ($frmtime + 0.001)/1")
+if [[ $frmtime == .* ]]; then frmtime=0$frmtime; fi
+
+sleep 1
+echo -e "\nFrame time = $frmtime"
+
+title3 "evselect $frmtime s"
+evselect table=$clean_file energycolumn=PI expression="$srcexp" withrateset=yes rateset=$path_out/${src}_lc_${frmtime}_src.lc timebinsize=$frmtime maketimecolumn=yes makeratecolumn=yes -V 0
+evselect table=$nosrc_file energycolumn=PI expression="$bgdexp" withrateset=yes rateset=$path_out/${src}_lc_${frmtime}_bgd.lc timebinsize=$frmtime maketimecolumn=yes makeratecolumn=yes -V 0
 
 title3 "evselect $TW s"
 evselect table=$clean_file energycolumn=PI expression="$srcexp" withrateset=yes rateset=$path_out/${src}_lc_${TW}_src.lc timebinsize=$TW maketimecolumn=yes makeratecolumn=yes -V 0
-evselect table=$clean_file energycolumn=PI expression="$bgdexp" withrateset=yes rateset=$path_out/${src}_lc_${TW}_bgd.lc timebinsize=$TW maketimecolumn=yes makeratecolumn=yes -V 0
+evselect table=$nosrc_file energycolumn=PI expression="$bgdexp" withrateset=yes rateset=$path_out/${src}_lc_${TW}_bgd.lc timebinsize=$TW maketimecolumn=yes makeratecolumn=yes -V 0
 
 title3 "epiclccorr"
-epiclccorr srctslist=$path_out/${src}_lc_${TW}_src.lc eventlist=$clean_file outset=$path_out/${src}_lccorr_${TW}.lc bkgtslist=$path_out/${src}_lc_${TW}_bgd.lc withbkgset=yes applyabsolutecorrections=yes -V 0
+epiclccorr srctslist=$path_out/${src}_lc_${frmtime}_src.lc eventlist=$clean_file outset=$path_out/${src}_lccorr_${frmtime}.lc bkgtslist=$path_out/${src}_lc_${frmtime}_bgd.lc withbkgset=yes applyabsolutecorrections=yes -V 0
+
+
 sleep 1
 
 title3 "lcstats"
-lcstats cfile1="$path_out/${src}_lccorr_${TW}.lc" window=$path/PN_gti.wi dtnb=${TW} nbint=1000000 tchat=2
-P=$(lcstats cfile1="$path_out/${src}_lccorr_${TW}.lc" window=$path/PN_gti.wi dtnb=${TW} nbint=1000000 tchat=2 | grep "Prob of constancy")
-sleep 1
+lcstats cfile1="$path_out/${src}_lccorr_${frmtime}.lc" window=$path/${INSTOUT}_gti.wi dtnb=$frmtime nbint=1000000 tchat=2 logname="$path_out/${src}_xronos.log"
+P=$(lcstats cfile1="$path_out/${src}_lccorr_${frmtime}.lc" window=$path/${INSTOUT}_gti.wi dtnb=$frmtime nbint=1000000 tchat=2 logname="$path_out/${src}_xronos.log" | grep "Prob of constancy")
 
+sleep 5
 P_chisq=$(echo $P | sed "s/Chi-Square Prob of constancy. //" | sed "s/ (0 means.*//")
 P_KS=$(echo $P | sed "s/.*Kolm.-Smir. Prob of constancy //" |  sed "s/ (0 means.*//")
 
 echo -e "Probabilities of constancy : \n\tP_chisq = $P_chisq\n\tP_KS    = $P_KS"
 
 title3 "lcurve"
-python3 $SCRIPTS/lcurve.py -path $FOLDER -obs $OBS -name $src -tw $TW -mode medium -pcs $P_chisq -pks $P_KS -n $ID
+
+python3 $SCRIPTS/lcurve.py -path $FOLDER -obs $OBS -inst $INSTOUT -name $src -tw $TW -ft $frmtime -mode medium -pcs $P_chisq -pks $P_KS -n $IDO
 
 end=`date +%s`
 runtime=$((end-start))
@@ -229,7 +262,8 @@ runtime=$((end-start))
 ###
 
 echo -e > $path_out/${src}_region.txt "Source     = $srcexp\nBackground = $bgdexp\nTotal time = $runtime"
-echo -e >> $output_log "$OBS $ID $src $DL $TW $P_chisq $P_KS"
+echo -e >> $output_log "$OBS $IDO $src $INSTOUT $DL $TW $P_chisq $P_KS"
 
 echo -e " # Total time obs. $OBS : $runtime seconds"
 echo -e "\nObservation $OBS ended\nTotal time = $runtime seconds"
+

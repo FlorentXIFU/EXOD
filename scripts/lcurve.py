@@ -42,7 +42,8 @@ parser.add_argument("-src", help="Path to the source's lightcurve fits file", na
 parser.add_argument("-bgd", help="Path to the background's lightcurve fits file", nargs='?', type=str, default=None)
 parser.add_argument("-gti", help="Path to the GTI of the observation", nargs='?', type=str, default=None)
 parser.add_argument("-tw", help="Time window", nargs='?', type=int, default=100)
-parser.add_argument("-n", help="Lightcurve number", nargs='?', type=str, default="")
+parser.add_argument("-ft", help="Frame time", nargs='?', type=float, default=None)
+parser.add_argument("-n", help="Lightcurve number", nargs='?', type=int, default=None)
 parser.add_argument("-pcs", dest="pcs", help="Chi-square probability of constancy", nargs='?', type=float, default=None)
 parser.add_argument("-pks", dest="pks", help="Kolmogorov-Smirnov probability of constancy", nargs='?', type=float, default=None)
 parser.add_argument("-mode", dest="mode", help="Plot style: monochrome / medium / color", nargs='?', type=str, default="medium")
@@ -58,7 +59,7 @@ if args.path[-1] == '/' :
 
 # Source and background files
 if args.src == None :
-    lccorr = '{0}/{1}/lcurve_{2}_{4}/{3}_lccorr_{2}.lc'.format(args.path, args.obs, args.tw, args.name, args.inst)
+    lccorr = '{0}/{1}/lcurve_{2}_{4}/{3}_lccorr_{2}.lc'.format(args.path, args.obs, args.ft, args.name, args.inst)
     print(args.name)
     if path.exists(lccorr) :
         args.src = lccorr
@@ -81,7 +82,11 @@ if args.gti == None :
         
 # Output file
 src = (args.name).replace("_", "+")
+#if args.n > 1000:
+#    out='{0}/{1}/lcurve_{2}_{4}/extracted_manual/{3}_lc_{2}.pdf'.format(args.path, args.obs, args.tw, args.name, args.inst)
+#else:
 out='{0}/{1}/lcurve_{2}_{4}/{3}_lc_{2}.pdf'.format(args.path, args.obs, args.tw, args.name, args.inst)
+    
 print(out)
 
 ###

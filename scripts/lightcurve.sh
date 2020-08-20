@@ -247,7 +247,7 @@ echo -e "Probabilities of constancy : \n\tP_chisq = $P_chisq\n\tP_KS    = $P_KS"
 
 title3 "lcurve"
 
-python3 $scripts/lcurve.py -path $folder -obs $observation -inst $inst -name $src -tw $TW -mode medium -pcs $P_chisq -pks $P_KS -n $id
+python3 $scripts/lcurve.py -path $folder -obs $observation -inst $inst -name $src -tw $TW -ft $frmtime -mode medium -pcs $P_chisq -pks $P_KS -n $id
 
 end=`date +%s`
 runtime=$((end-start))
