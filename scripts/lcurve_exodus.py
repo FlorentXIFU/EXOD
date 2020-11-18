@@ -60,16 +60,39 @@ with open(args.file, "r") as f:
         words=line.split()
         if words[3]=='PN':
             name_PN=words[2]     # Source name
-            P_chi_PN=words[6]   # Chi-square probability of constancy
-            P_KS_PN=words[7]    # Kolmogorov-Smirnov probability of constancy
+            try:
+                P_chi_PN=words[6]   # Chi-square probability of constancy
+            except:
+                P_chi_PN=9999
+            
+            try:
+                P_KS_PN=words[7]    # Kolmogorov-Smirnov probability of constancy
+            except:
+                P_KS_PN=9999
+            
         elif words[3]=='M1':
             name_M1=words[2]
-            P_chi_M1=words[6]
-            P_KS_M1=words[7]
+            try:
+                P_chi_M1=words[6]   # Chi-square probability of constancy
+            except:
+                P_chi_M1=9999
+            
+            try:
+                P_KS_M1=words[7]    # Kolmogorov-Smirnov probability of constancy
+            except:
+                P_KS_M1=9999
+
         elif words[3]=='M2':
             name_M2=words[2]
-            P_chi_M2=words[6]
-            P_KS_M2=words[7]
+            try:
+                P_chi_M2=words[6]   # Chi-square probability of constancy
+            except:
+                P_chi_M2=9999
+            
+            try:
+                P_KS_M2=words[7]    # Kolmogorov-Smirnov probability of constancy
+            except:
+                P_KS_M2=9999
             
 # Source and background files
 # PN
@@ -262,8 +285,10 @@ for s in range(3) :
     plt.text(0.2, 1.1, "inst : {0}".format(inst_list[s]), transform = ax.transAxes, fontsize=13)
     plt.text(0.5, 1.1, "src : {0}".format(name_list[s]), transform = ax.transAxes, fontsize=13)
     # Probabilities of constancy
-    plt.text(0.1, 1.03, r"P($\chi^2$) = {0:.2e} ".format(pcs_list[s]), transform = ax.transAxes, fontsize=13)
-    plt.text(0.52, 1.03, r"P(KS) = {0:.2e} ".format(pks_list[s]), transform = ax.transAxes, fontsize=13)
+    if pcs_list[s] != 9999:
+        plt.text(0.1, 1.03, r"P($\chi^2$) = {0:.2e} ".format(pcs_list[s]), transform = ax.transAxes, fontsize=13)
+    if pks_list[s] != 9999:
+        plt.text(0.52, 1.03, r"P(KS) = {0:.2e} ".format(pks_list[s]), transform = ax.transAxes, fontsize=13)
 
     # Setup
     plt.xlim(xmin, xmax)

@@ -15,6 +15,7 @@ FOLDER=/mnt/data/Florent/results
 output_log=/home/florent/results.log
 output_file=/home/florent/triple_lightcurves.pdf
 output_file_lc=/home/florent/var_lightcurves.pdf
+output_file_whole=/home/florent/var_whole.pdf
 
 cd $FOLDER
 observations=(0*)
@@ -22,6 +23,7 @@ nb_img=${#observations[@]}
 echo $nb_img
 files=()
 fileslc=()
+fileswhole=()
 
 for obs in ${observations[@]}; do
 
@@ -31,6 +33,7 @@ testPN=''
 testM1=''
 testM2=''
 triple=''
+whole=''
 submode=''
 numtrip=0
 
@@ -115,11 +118,17 @@ files+=($FOLDER/$obs/triple*.pdf)
 fi
 fi
 
+# Adding files if exod_analysis has been done
+if [ -f $FOLDER/$obs/variability_whole.pdf ] ; then
+whole="$whole\twhole"
+fileswhole+=($FOLDER/$obs/variability_whole.pdf)
+fi
+
 # Printing results
-echo -e "$obs $submode $inst $triple"
+echo -e "$obs $submode $inst $triple $whole"
 
 # Results are written in a log file
-echo -e >> $output_log "$obs $submode $inst $triple"
+echo -e >> $output_log "$obs $submode $inst $triple $whole"
 
 done
 
@@ -134,5 +143,11 @@ echo -e "Triple correlation file : $output_file"
 gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -sOutputFile=$output_file_lc ${fileslc[@]}
 
 echo -e "Lightcurves file : $output_file_lc"
+
+# Creation of big PDF with all exod_analysis
+
+gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -sOutputFile=$output_file_whole ${fileswhole[@]}
+
+echo -e "EXOD analysis file : $output_file_whole"
 
 

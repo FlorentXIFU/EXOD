@@ -19,7 +19,8 @@
 # Default variables
 CPUS=12
 # Default folders
-DIR=/home/florent/data
+DIR=/mnt/data/Florent/data
+RESULTS=/mnt/data/Florent/results
 SCRIPTS=/home/florent/EXOD/scripts
 INST=PN
 
@@ -96,28 +97,28 @@ waitForFinish()
 ########################################################################
 
 # Downloading files
-
-if [ -f $DIR/$obs/*IEVLI.FTZ -a -f $DIR/$obs/*FBKTSR*.FTZ -a -f $DIR/$obs/*SUM.ASC ] && [ $F = false ]; then
-  echo "Files downloaded. Skipping"
-else
-
-  Title "DOWNLOADING FILES"
-  bash $SCRIPTS/download_observation.sh $DIR $OBS $INST
-
-fi
+#
+#if [ -f $DIR/$obs/*IEVLI.FTZ -a -f $DIR/$obs/*FBKTSR*.FTZ -a -f $DIR/$obs/*SUM.ASC ] && [ $F = false ]; then
+#  echo "Files downloaded. Skipping"
+#else
+#
+#  Title "DOWNLOADING FILES"
+#  bash $SCRIPTS/download_observation.sh $DIR $OBS $INST
+#
+#fi
 
 cd $DIR/$obs
 
 # Filtering events
 
-if [ -f ${INST}_clean.fits -a -f ${INST}_gti.fits -a -f ${INST}_image.fits ] && [ $F = false ]; then
-  echo "Files filtered. Skipping"
-else
-
-  Title "FILTERING EVENTS"
-  bash $SCRIPTS/filtering.sh -f $DIR -o $OBS -s $SCRIPTS -i $INST
-
-fi
+#if [ -f ${INST}_clean.fits -a -f ${INST}_gti.fits -a -f ${INST}_image.fits ] && [ $F = false ]; then
+#  echo "Files filtered. Skipping"
+#else
+#
+#  Title "FILTERING EVENTS"
+#  bash $SCRIPTS/filtering.sh -f $DIR -o $OBS -s $SCRIPTS -i $INST
+#
+#fi
 
 # Applying detector
 
@@ -129,24 +130,17 @@ if [ -f $(var CLEAN_FILE) -a -f $(var GTI_FILE) -a -f $(var IMG_FILE) ] && [ $F 
 else nv=""; fi
 
   # 8 100 3 1.0
-  python3 -W"ignore" $SCRIPTS/detector.py -path $DIR/$OBS -bs 3 -dl 8 -tw 100 -gtr 1.0 -mta $CPUS -inst $INST --render $nv
-  # 7 30 3 1.0
-  python3 -W"ignore" $SCRIPTS/detector.py -path $DIR/$OBS -bs 3 -dl 7 -tw 30 -gtr 1.0 -mta $CPUS -inst $INST --render $nv
-  # 6 10 3 1.0 
-  python3 -W"ignore" $SCRIPTS/detector.py -path $DIR/$OBS -bs 3 -dl 6 -tw 10 -gtr 1.0 -mta $CPUS -inst $INST --render $nv
-  # 5 3 3 1.0
-  python3 -W"ignore" $SCRIPTS/detector.py -path $DIR/$OBS -bs 3 -dl 5 -tw 3 -gtr 1.0 -mta $CPUS -inst $INST --render $nv
+  python3 -W"ignore" $SCRIPTS/detector.py -path $DIR/$OBS -out $RESULTS/$OBS -bs 3 -dl 8 -tw 100 -gtr 1.0 -mta $CPUS -inst $INST --render $nv
+  # 6 30 3 1.0
+  python3 -W"ignore" $SCRIPTS/detector.py -path $DIR/$OBS -out $RESULTS/$OBS -bs 3 -dl 6 -tw 30 -gtr 1.0 -mta $CPUS -inst $INST --render $nv
+  # 4 10 3 1.0 
+  python3 -W"ignore" $SCRIPTS/detector.py -path $DIR/$OBS -out $RESULTS/$OBS -bs 3 -dl 4 -tw 10 -gtr 1.0 -mta $CPUS -inst $INST --render $nv
+  # 3 3 3 1.0
+  python3 -W"ignore" $SCRIPTS/detector.py -path $DIR/$OBS -out $RESULTS/$OBS -bs 3 -dl 3 -tw 3 -gtr 1.0 -mta $CPUS -inst $INST --render $nv
 
 # Rendering all
 
 Title "RENDERING"
 
-python3 -W"ignore" $SCRIPTS/render_all.py -path $DIR/$OBS -inst $INST
-
-
-
-
-
-
-
+python3 -W"ignore" $SCRIPTS/render_all.py -path $RESULTS/$OBS -inst $INST
 
